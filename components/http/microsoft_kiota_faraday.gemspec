@@ -28,6 +28,7 @@ Gem::Specification.new do |spec|
   spec.executables   = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
   spec.add_dependency 'faraday', '~> 2.7', '>= 2.7.2'
+  spec.add_dependency 'faraday-retry', '~> 2.4'
   spec.add_dependency 'microsoft_kiota_abstractions', MicrosoftKiotaFaraday::VERSION
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'rspec', '~> 3.0'
