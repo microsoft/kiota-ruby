@@ -57,7 +57,7 @@ module MicrosoftKiotaFaraday
       def retry_after(value, now = Time.now.utc)
         return if value.nil?
 
-        seconds = value.split(',').filter_map { |part| Float(part.strip, exception: false) }.find(&:positive?)
+        seconds = value.split(',').filter_map { |part| Float(part.strip, exception: false) }.find { |seconds| seconds >= 0 }
         return seconds if seconds
 
         begin
