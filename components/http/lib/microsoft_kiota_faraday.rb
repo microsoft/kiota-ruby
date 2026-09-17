@@ -3,6 +3,7 @@
 require_relative 'microsoft_kiota_faraday/version'
 require_relative 'microsoft_kiota_faraday/middleware/response_handler_option'
 require_relative 'microsoft_kiota_faraday/middleware/retry_handler_option'
+require_relative 'microsoft_kiota_faraday/middleware/retry_exhausted_error'
 require_relative 'microsoft_kiota_faraday/middleware/retry_handler'
 require_relative 'microsoft_kiota_faraday/middleware/parameters_name_decoding_option'
 require_relative 'microsoft_kiota_faraday/middleware/parameters_name_decoding_handler'
