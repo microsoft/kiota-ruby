@@ -11,7 +11,8 @@ module MicrosoftKiotaAbstractions
       CONNECT: :CONNECT,
       PUT: :PUT,
       TRACE: :TRACE,
-      HEAD: :HEAD
+      HEAD: :HEAD,
+      QUERY: :QUERY
     }.freeze
   end
 end

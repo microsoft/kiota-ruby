@@ -180,6 +180,8 @@ module MicrosoftKiotaFaraday
         request = @client.build_request(:trace)
       when :HEAD
         request = @client.build_request(:head)
+      when :QUERY
+        request = @client.build_request(:query)
       else
         raise StandardError, 'unsupported http method'
       end
