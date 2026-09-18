@@ -41,7 +41,8 @@ module MicrosoftKiotaFaraday
       private
 
       def option_for(request_env)
-        request_env.dig(:request, :context, @default_option.get_key) || @default_option
+        request_option = request_env[:request]&.[](:context)&.[](@default_option.get_key)
+        request_option || @default_option
       end
 
       # Retries request_env until a non-retryable response is received, the configured
