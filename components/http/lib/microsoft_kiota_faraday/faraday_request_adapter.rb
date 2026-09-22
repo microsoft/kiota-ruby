@@ -5,6 +5,7 @@ require 'faraday'
 require 'net/http'
 require 'stringio'
 require_relative 'kiota_client_factory'
+require_relative 'request_body'
 require_relative 'middleware/response_handler_option'
 
 module MicrosoftKiotaFaraday
@@ -180,8 +181,7 @@ module MicrosoftKiotaFaraday
                                end
         end
       end
-      request.body = request_info.content unless request_info.content.nil? || request_info.content.empty?
-      # TODO: the json serialization writer returns a string at the moment, change to body_stream when this is fixed
+      RequestBody.apply(request, request_info.content)
       request_options = request_info.get_request_options
       if !request_options.nil? && !request_options.empty?
         request.options = Faraday::RequestOptions.new if request.options.nil?
