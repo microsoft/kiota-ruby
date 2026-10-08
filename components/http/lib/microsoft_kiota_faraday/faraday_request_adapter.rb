@@ -34,6 +34,13 @@ module MicrosoftKiotaFaraday
       @base_url = ''
     end
 
+    def enable_backing_store(backing_store_factory = nil)
+      @parse_node_factory = MicrosoftKiotaAbstractions::ApiClientBuilder.enable_backing_store_for_parse_node_factory(@parse_node_factory)
+      @serialization_writer_factory =
+        MicrosoftKiotaAbstractions::ApiClientBuilder.enable_backing_store_for_serialization_writer_factory(@serialization_writer_factory)
+      MicrosoftKiotaAbstractions::BackingStoreFactorySingleton.instance = backing_store_factory if backing_store_factory
+    end
+
     def set_base_url(base_url)
       @base_url = base_url
     end

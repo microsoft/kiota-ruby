@@ -125,8 +125,14 @@ module MicrosoftKiotaSerializationJson
       if key
         @writer[key] = object_value_hash(*values)
       else
-        values.each { |v| v.serialize(self) }
+        values.each { |v| serialize_object(v, self) }
       end
+    end
+
+    def write_null_value(key)
+      return set_root_value(nil) if key.nil?
+
+      @writer[key] = nil
     end
 
     def write_collection_of_enum_values(key, values)
@@ -160,10 +166,28 @@ module MicrosoftKiotaSerializationJson
     private
 
     def object_value_hash(value, *additional_values_to_merge)
-      temp = JsonSerializationWriter.new
-      value.serialize(temp)
-      additional_values_to_merge.each { |v| v&.serialize(temp) }
+      temp = child_writer
+      serialize_object(value, temp)
+      additional_values_to_merge.each { |v| serialize_object(v, temp) unless v.nil? }
       temp.writer
+    end
+
+    # the after hook runs even when writing the model raised, so callbacks can restore their state
+    def serialize_object(value, writer)
+      on_before_object_serialization&.call(value)
+      on_start_object_serialization&.call(value, writer)
+      value.serialize(writer)
+    ensure
+      on_after_object_serialization&.call(value)
+    end
+
+    # nested writers keep the callbacks so nested models write only their changes too
+    def child_writer
+      JsonSerializationWriter.new.tap do |writer|
+        writer.on_before_object_serialization = on_before_object_serialization
+        writer.on_after_object_serialization = on_after_object_serialization
+        writer.on_start_object_serialization = on_start_object_serialization
+      end
     end
 
     public

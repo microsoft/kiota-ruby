@@ -2,6 +2,13 @@
 
 module MicrosoftKiotaAbstractions
   module SerializationWriter
+    # called with the model before and after it is written, and with the model and its writer when it starts
+    attr_accessor :on_before_object_serialization, :on_after_object_serialization, :on_start_object_serialization
+
+    def write_null_value(_key)
+      raise NotImplementedError
+    end
+
     def write_string_value(_key, _value)
       raise NotImplementedError
     end

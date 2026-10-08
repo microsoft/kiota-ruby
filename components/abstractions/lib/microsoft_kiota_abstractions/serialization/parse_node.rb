@@ -2,6 +2,9 @@
 
 module MicrosoftKiotaAbstractions
   module ParseNode
+    # called with the model before and after its fields are filled, see ParseNodeProxyFactory
+    attr_accessor :on_before_assign_field_values, :on_after_assign_field_values
+
     def get_string_value
       raise NotImplementedError
     end

@@ -28,6 +28,11 @@ module MicrosoftKiotaAbstractions
       raise NotImplementedError
     end
 
+    # enables the backing store on the models this adapter reads and writes
+    def enable_backing_store(_backing_store_factory = nil)
+      raise NotImplementedError
+    end
+
     def set_base_url(_base_url)
       raise NotImplementedError
     end

@@ -95,7 +95,7 @@ module MicrosoftKiotaSerializationJson
       @current_node.map do |object|
         next if object.nil?
 
-        current_parse_node = JsonParseNode.new(object)
+        current_parse_node = child_node(object)
         current_parse_node.get_object_value(factory)
       end
     end
@@ -104,7 +104,12 @@ module MicrosoftKiotaSerializationJson
       raise StandardError, 'Factory cannot be null' if factory.nil?
 
       item = factory.call(self)
-      assign_field_values(item)
+      begin
+        on_before_assign_field_values&.call(item)
+        assign_field_values(item)
+      ensure
+        on_after_assign_field_values&.call(item)
+      end
       item
     rescue StandardError => e
       raise e.class, 'Error during deserialization'
@@ -118,7 +123,7 @@ module MicrosoftKiotaSerializationJson
         next if v.nil?
 
         deserializer = fields[k]
-        next deserializer.call(JsonParseNode.new(v)) if deserializer
+        next deserializer.call(child_node(v)) if deserializer
 
         additional_data = item.respond_to?(:additional_data) ? item.additional_data : nil
         next if additional_data.nil?
@@ -158,7 +163,17 @@ module MicrosoftKiotaSerializationJson
       return unless @current_node.is_a?(Hash)
 
       raw_value = @current_node[name]
-      JsonParseNode.new(raw_value) if raw_value
+      child_node(raw_value) if raw_value
+    end
+
+    private
+
+    # nested nodes keep the callbacks so nested models are tracked too
+    def child_node(value)
+      JsonParseNode.new(value).tap do |node|
+        node.on_before_assign_field_values = on_before_assign_field_values
+        node.on_after_assign_field_values = on_after_assign_field_values
+      end
     end
   end
 end
