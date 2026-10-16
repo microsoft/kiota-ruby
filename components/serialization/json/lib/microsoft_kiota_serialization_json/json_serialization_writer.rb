@@ -102,6 +102,14 @@ module MicrosoftKiotaSerializationJson
       @writer[key] = value.string
     end
 
+    def write_byte_array_value(key, value)
+      raise StandardError, 'no key or value included in write_byte_array_value(key, value)' if key.nil? && value.nil?
+      return set_root_value([value].pack('m0')) if key.nil?
+      return if value.nil?
+
+      @writer[key] = [value].pack('m0')
+    end
+
     def write_collection_of_primitive_values(key, values)
       return unless values
       return set_root_value(values.map { |v| serialized_scalar(v) }) unless key

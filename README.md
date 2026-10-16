@@ -16,6 +16,7 @@ Ruby 3.3 or newer is required.
 | [microsoft_kiota_serialization_json](components/serialization/json/) | JSON serialization implementation | [![Gem Version](https://badge.fury.io/rb/microsoft_kiota_serialization_json.svg)](https://rubygems.org/gems/microsoft_kiota_serialization_json) |
 | [microsoft_kiota_serialization_form](components/serialization/form/) | Form serialization implementation | [![Gem Version](https://badge.fury.io/rb/microsoft_kiota_serialization_form.svg)](https://rubygems.org/gems/microsoft_kiota_serialization_form) |
 | [microsoft_kiota_serialization_text](components/serialization/text/) | Text serialization implementation | [![Gem Version](https://badge.fury.io/rb/microsoft_kiota_serialization_text.svg)](https://rubygems.org/gems/microsoft_kiota_serialization_text) |
+| [microsoft_kiota_serialization_multipart](components/serialization/multipart/) | Multipart serialization implementation | [![Gem Version](https://badge.fury.io/rb/microsoft_kiota_serialization_multipart.svg)](https://rubygems.org/gems/microsoft_kiota_serialization_multipart) |
 | [microsoft_kiota_faraday](components/http/) | HTTP client implementation with Faraday | [![Gem Version](https://badge.fury.io/rb/microsoft_kiota_faraday.svg)](https://rubygems.org/gems/microsoft_kiota_faraday) |
 | [microsoft_kiota_authentication_oauth](components/authentication/oauth/) | OAuth authentication provider | [![Gem Version](https://badge.fury.io/rb/microsoft_kiota_authentication_oauth.svg)](https://rubygems.org/gems/microsoft_kiota_authentication_oauth) |
 
@@ -28,6 +29,7 @@ gem 'microsoft_kiota_abstractions'
 gem 'microsoft_kiota_serialization_json'
 gem 'microsoft_kiota_serialization_form'
 gem 'microsoft_kiota_serialization_text'
+gem 'microsoft_kiota_serialization_multipart'
 gem 'microsoft_kiota_faraday'
 gem 'microsoft_kiota_authentication_oauth'
 ```
@@ -51,6 +53,7 @@ rake abstractions:spec
 rake serialization-json:spec
 rake serialization-form:spec
 rake serialization-text:spec
+rake serialization-multipart:spec
 rake http:spec
 rake authentication-oauth:spec
 ```

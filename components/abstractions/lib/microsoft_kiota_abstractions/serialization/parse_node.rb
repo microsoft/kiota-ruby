@@ -37,6 +37,10 @@ module MicrosoftKiotaAbstractions
       raise NotImplementedError
     end
 
+    def get_byte_array_value
+      raise NotImplementedError
+    end
+
     def get_collection_of_primitive_values
       raise NotImplementedError
     end

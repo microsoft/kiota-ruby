@@ -5,6 +5,7 @@ COMPONENTS = {
   'serialization-json' => 'components/serialization/json',
   'serialization-form' => 'components/serialization/form',
   'serialization-text' => 'components/serialization/text',
+  'serialization-multipart' => 'components/serialization/multipart',
   'http' => 'components/http',
   'authentication-oauth' => 'components/authentication/oauth'
 }.freeze

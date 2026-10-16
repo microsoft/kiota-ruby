@@ -9,6 +9,7 @@ gem 'microsoft_kiota_authentication_oauth', path: 'components/authentication/oau
 gem 'microsoft_kiota_faraday', path: 'components/http'
 gem 'microsoft_kiota_serialization_form', path: 'components/serialization/form'
 gem 'microsoft_kiota_serialization_json', path: 'components/serialization/json'
+gem 'microsoft_kiota_serialization_multipart', path: 'components/serialization/multipart'
 gem 'microsoft_kiota_serialization_text', path: 'components/serialization/text'
 
 gem 'rake', '~> 13.0'

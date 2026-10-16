@@ -12,6 +12,7 @@
         "components/serialization/json/lib/microsoft_kiota_serialization_json/version.rb",
         "components/serialization/form/lib/microsoft_kiota_serialization_form/version.rb",
         "components/serialization/text/lib/microsoft_kiota_serialization_text/version.rb",
+        "components/serialization/multipart/lib/microsoft_kiota_serialization_multipart/version.rb",
         "components/http/lib/microsoft_kiota_faraday/version.rb",
         "components/authentication/oauth/lib/microsoft_kiota_authentication_oauth/version.rb"
       ]

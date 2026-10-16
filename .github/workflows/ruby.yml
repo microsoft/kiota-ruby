@@ -30,6 +30,7 @@ jobs:
           - { name: serialization-json, dir: components/serialization/json }
           - { name: serialization-form, dir: components/serialization/form }
           - { name: serialization-text, dir: components/serialization/text }
+          - { name: serialization-multipart, dir: components/serialization/multipart }
           - { name: http, dir: components/http }
           - { name: authentication-oauth, dir: components/authentication/oauth }
     runs-on: ${{ matrix.os }}

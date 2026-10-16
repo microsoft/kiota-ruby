@@ -49,6 +49,10 @@ module MicrosoftKiotaAbstractions
       raise NotImplementedError
     end
 
+    def write_byte_array_value(_key, _value)
+      raise NotImplementedError
+    end
+
     def write_collection_of_primitive_values(_key, _value)
       raise NotImplementedError
     end

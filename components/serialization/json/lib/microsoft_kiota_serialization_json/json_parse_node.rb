@@ -55,6 +55,10 @@ module MicrosoftKiotaSerializationJson
       MicrosoftKiotaAbstractions::ISODuration.new(@current_node) if @current_node.is_a?(String)
     end
 
+    def get_byte_array_value
+      @current_node.unpack1('m') if @current_node.is_a?(String)
+    end
+
     # The generator passes the type as a class, except for booleans which it passes as a plain
     # string. A `case` cannot dispatch on that: `when String` asks whether the type is an instance
     # of String, and a class is an instance of Class, so every branch fell through to the string

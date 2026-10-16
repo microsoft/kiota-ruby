@@ -5,6 +5,7 @@ require 'time'
 require 'uri'
 require 'stduritemplate'
 require_relative 'http_method'
+require_relative 'multipart_body'
 require_relative 'request_headers'
 
 module MicrosoftKiotaAbstractions
@@ -114,6 +115,11 @@ module MicrosoftKiotaAbstractions
 
     def set_content_from_parsable(request_adapter, content_type, values)
       writer = request_adapter.get_serialization_writer_factory.get_serialization_writer(content_type)
+      if values.is_a?(MultipartBody)
+        content_type = "#{content_type.gsub(/;\s*boundary=[^;]*/i, '')}; boundary=#{values.boundary}"
+        values.request_adapter = request_adapter
+        @headers.remove(@@content_type_header)
+      end
       @headers.try_add(@@content_type_header, content_type)
       if !values.nil? && values.is_a?(Array)
         writer.write_collection_of_object_values(nil, values)
