@@ -24,7 +24,8 @@ module MicrosoftKiotaAbstractions
         end
       else
         Fiber.new do
-          token = @access_token_provider.get_authorization_token(request.uri, additional_properties).resume
+          auth_fiber = @access_token_provider.get_authorization_token(request.uri, additional_properties)
+          token = auth_fiber.resume if auth_fiber
           request.headers.add(AUTHORIZATION_HEADER_KEY, "Bearer #{token}") unless token.nil? || token.empty?
         end
       end

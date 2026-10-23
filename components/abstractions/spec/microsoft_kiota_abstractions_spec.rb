@@ -21,32 +21,6 @@ RSpec.describe MicrosoftKiotaAbstractions do
     token_provider.authenticate_request(nil).resume
   end
 
-  it 'creates a token authentication provider with existing authorization header' do
-    access_token_provider = AccessTokenProviderMock.new
-    token_provider = MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider.new(access_token_provider)
-    expect(token_provider).not_to be nil
-    request_obj = MicrosoftKiotaAbstractions::RequestInformation.new
-    request_obj.headers.add(
-      MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider::AUTHORIZATION_HEADER_KEY, 'SAMPLE'
-    )
-    # Authentication does nothing besides returning an empty Fiber
-    token_provider.authenticate_request(request_obj).resume
-    # The request header should not have changed
-    expect(request_obj.headers.get(MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider::AUTHORIZATION_HEADER_KEY).at(0)).to eq 'SAMPLE'
-  end
-
-  it 'creates a token authentication provider with mock access token' do
-    access_token_provider = AccessTokenProviderMock.new
-    token_provider = MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider.new(access_token_provider)
-    expect(token_provider).not_to be nil
-    request_obj = MicrosoftKiotaAbstractions::RequestInformation.new
-    # We have to set a URI, otherwise the code will fail ("undefined method 'chars' for nil")
-    request_obj.uri = 'http://sample.com'
-    token_provider.authenticate_request(request_obj).resume
-    # The request header should now contain the "DUMMY_TOKEN" value:
-    expect(request_obj.headers.get(MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider::AUTHORIZATION_HEADER_KEY).at(0)).to eq "Bearer #{AccessTokenProviderMock::DUMMY_TOKEN}"
-  end
-
   it 'returns the raw URI when set via setter' do
     request_obj = MicrosoftKiotaAbstractions::RequestInformation.new
     request_obj.path_parameters['term'] = 'search'

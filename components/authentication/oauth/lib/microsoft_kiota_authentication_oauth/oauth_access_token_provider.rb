@@ -12,6 +12,8 @@ require_relative 'contexts/oauth_custom_flow'
 module MicrosoftKiotaAuthenticationOAuth
   # Access Token Provider class implementation
   class OAuthAccessTokenProvider
+    LOCALHOST_STRINGS = ['localhost', '::1', '[::1]', '127.0.0.1'].freeze
+
     # This is the initializer for OAuthAccessTokenProvider.
     # :params
     #   token_request_context: a instance of one of our token request context or a custom implementation
@@ -48,11 +50,24 @@ module MicrosoftKiotaAuthenticationOAuth
     #   additional_params: hash of symbols to string values, ie { response_mode: 'fragment', prompt: 'login' }
     #                      default is empty hash
     def get_authorization_token(uri, _additional_properties = {})
-      nil if !uri || !@host_validator.url_host_valid?(uri)
+      return Fiber.new { nil } if !uri || uri.to_s.empty?
 
-      parsed_url = URI(uri)
+      begin
+        parsed_url = URI(uri)
+      rescue URI::InvalidURIError, ArgumentError
+        return Fiber.new { nil }
+      end
 
-      raise StandardError, 'Only https is supported' if parsed_url.scheme != 'https'
+      return Fiber.new { nil } if parsed_url.nil? || parsed_url.host.nil?
+
+      https_version = parsed_url.dup
+      https_version.scheme = 'https'
+      return Fiber.new { nil } unless @host_validator.url_host_valid?(https_version.to_s)
+
+      is_localhost = localhost?(parsed_url)
+      is_https = parsed_url.scheme == 'https'
+      is_http_localhost = parsed_url.scheme == 'http' && is_localhost
+      raise StandardError, 'Only https is supported' unless is_https || is_http_localhost
 
       @scopes << "#{parsed_url.scheme}://#{parsed_url.host}/.default" if @scopes.empty?
       @token_request_context.initialize_scopes(@scopes)
@@ -83,5 +98,19 @@ module MicrosoftKiotaAuthenticationOAuth
     protected
 
     attr_writer :host_validator, :token_credential, :scopes, :cached_token
+
+    private
+
+    def localhost?(parsed_url)
+      host = parsed_url.host
+      return false if host.nil?
+
+      return true if LOCALHOST_STRINGS.include?(host.downcase)
+
+      hostname = parsed_url.hostname
+      return false if hostname.nil?
+
+      LOCALHOST_STRINGS.include?(hostname.downcase)
+    end
   end
 end

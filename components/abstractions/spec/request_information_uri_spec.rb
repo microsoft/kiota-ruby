@@ -64,4 +64,27 @@ RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
     expect { validator.allowed_hosts = ['https://bad.com'] }.to raise_error(ArgumentError)
     expect(validator.url_host_valid?('https://anything.com')).to be(false)
   end
+
+  it 'validates host with https scheme and allows http for localhost' do
+    validator = described_class.new(['example.com', 'localhost'])
+    expect(validator.url_host_valid?('http://example.com')).to be(false)
+    expect(validator.url_host_valid?('http://localhost:8080')).to be(true)
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://other.com')).to be(false)
+    expect(validator.url_host_valid?('http://other.com')).to be(false)
+  end
+
+  it 'validates IPv6 loopback hosts with both bracketed and unbracketed allowlist entries' do
+    bracketed_validator = described_class.new(['[::1]'])
+    expect(bracketed_validator.url_host_valid?('https://[::1]:8080/v1.0')).to be(true)
+    expect(bracketed_validator.url_host_valid?('http://[::1]:8080/v1.0')).to be(true)
+    expect(bracketed_validator.url_host_valid?('http://example.com')).to be(false)
+    expect(bracketed_validator.url_host_valid?('https://example.com')).to be(false)
+
+    unbracketed_validator = described_class.new(['::1'])
+    expect(unbracketed_validator.url_host_valid?('https://[::1]:8080/v1.0')).to be(true)
+    expect(unbracketed_validator.url_host_valid?('http://[::1]:8080/v1.0')).to be(true)
+    expect(unbracketed_validator.url_host_valid?('http://example.com')).to be(false)
+    expect(unbracketed_validator.url_host_valid?('https://example.com')).to be(false)
+  end
 end
