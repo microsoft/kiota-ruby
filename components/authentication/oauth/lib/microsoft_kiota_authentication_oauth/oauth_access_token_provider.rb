@@ -48,7 +48,7 @@ module MicrosoftKiotaAuthenticationOAuth
     #   additional_params: hash of symbols to string values, ie { response_mode: 'fragment', prompt: 'login' }
     #                      default is empty hash
     def get_authorization_token(uri, _additional_properties = {})
-      nil if !uri || !@host_validator.url_host_valid?(uri)
+      return Fiber.new { nil } if !uri || !@host_validator.url_host_valid?(uri)
 
       parsed_url = URI(uri)
 
