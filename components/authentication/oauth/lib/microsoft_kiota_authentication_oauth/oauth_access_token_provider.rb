@@ -120,6 +120,8 @@ module MicrosoftKiotaAuthenticationOAuth
       return nil unless token
 
       if token.expired?
+        return nil if token.refresh_token.nil? || token.refresh_token.empty?
+
         token = token.refresh!
         @cached_tokens[cache_key] = token.to_hash
       end

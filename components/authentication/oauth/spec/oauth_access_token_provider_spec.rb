@@ -156,6 +156,16 @@ RSpec.describe MicrosoftKiotaAuthenticationOAuth::OAuthAccessTokenProvider, 'sco
     expect(context).to have_received(:get_token).twice
   end
 
+  it 'returns an unexpired cached token without requesting a new one' do
+    cached_token = OAuth2::AccessToken.new(context.oauth_provider, 'cached_token', expires_in: 3600)
+    allow(context).to receive(:get_token).and_return(cached_token)
+
+    expect(provider.get_authorization_token('https://one.example.com').resume).to eq('cached_token')
+    expect(provider.get_authorization_token('https://one.example.com').resume).to eq('cached_token')
+
+    expect(context).to have_received(:get_token).once
+  end
+
   it 'refreshes an expired token in the cache' do
     expired_token = OAuth2::AccessToken.new(
       context.oauth_provider, 'old_token', refresh_token: 'refresh_val', expires_in: -10
@@ -168,6 +178,21 @@ RSpec.describe MicrosoftKiotaAuthenticationOAuth::OAuthAccessTokenProvider, 'sco
 
     provider.get_authorization_token('https://one.example.com').resume
     expect(provider.get_authorization_token('https://one.example.com').resume).to eq('refreshed_token')
+
+    expect(context).to have_received(:get_token).once
+  end
+
+  it 'requests a new token when an expired token has no refresh token' do
+    expired_token = OAuth2::AccessToken.new(context.oauth_provider, 'old_token', expires_in: -10)
+    new_token = OAuth2::AccessToken.new(context.oauth_provider, 'new_token', expires_in: 3600)
+    allow(context).to receive(:get_token).and_return(expired_token, new_token)
+    expect_any_instance_of(OAuth2::AccessToken).not_to receive(:refresh!)
+
+    provider.get_authorization_token('https://one.example.com').resume
+    expect(provider.get_authorization_token('https://one.example.com').resume).to eq('new_token')
+    expect(provider.get_authorization_token('https://one.example.com').resume).to eq('new_token')
+
+    expect(context).to have_received(:get_token).twice
   end
 
   it 'does not mutate explicitly configured scopes' do
