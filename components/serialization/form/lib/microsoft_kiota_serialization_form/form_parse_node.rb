@@ -10,8 +10,6 @@ module MicrosoftKiotaSerializationForm
   class FormParseNode
     include MicrosoftKiotaAbstractions::ParseNode
 
-    attr_accessor :on_before_assign_field_values, :on_after_assign_field_values
-
     # temporal readers take only their own shape, as in Go, so a union picks the right member
     DATE = /\A\d{4}-\d{2}-\d{2}\z/
     TIME = /\A\d{2}:\d{2}(:\d{2}(\.\d+)?)?\z/

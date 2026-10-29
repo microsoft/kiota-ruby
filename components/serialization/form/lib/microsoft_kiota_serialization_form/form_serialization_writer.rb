@@ -12,8 +12,6 @@ module MicrosoftKiotaSerializationForm
 
     NESTED_OBJECTS = 'Form serialization does not support nested objects.'
 
-    attr_accessor :on_before_object_serialization, :on_after_object_serialization, :on_start_object_serialization
-
     def initialize
       @buffer = +''
       @depth = 0
