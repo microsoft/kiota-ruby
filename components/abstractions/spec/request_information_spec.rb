@@ -88,4 +88,25 @@ RSpec.describe MicrosoftKiotaAbstractions do
     request_info.set_content_from_parsable(adapter, 'application/json', Class.new { include MicrosoftKiotaAbstractions::Parsable }.new)
     expect(request_info.headers.get('Content-Type')).to eq(['application/json'])
   end
+
+  it 'keeps the error of a content type without a serialization writer' do
+    factory = double('factory')
+    allow(factory).to receive(:get_serialization_writer)
+      .and_raise(ArgumentError, 'Content type text/csv does not have a factory to be serialized')
+    adapter = double('adapter', get_serialization_writer_factory: factory)
+    request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+    body = Class.new { include MicrosoftKiotaAbstractions::Parsable }.new
+    expect { request_info.set_content_from_parsable(adapter, 'text/csv', body) }
+      .to raise_error(ArgumentError, 'Content type text/csv does not have a factory to be serialized')
+  end
+
+  it 'keeps the error of a multipart body without parts' do
+    writer = double('writer', get_serialized_content: 'content')
+    allow(writer).to receive(:write_object_value) { |_key, value| value.serialize(writer) }
+    adapter = double('adapter', get_serialization_writer_factory: double('factory', get_serialization_writer: writer))
+    request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+    body = MicrosoftKiotaAbstractions::MultipartBody.new
+    expect { request_info.set_content_from_parsable(adapter, 'multipart/form-data', body) }
+      .to raise_error(ArgumentError, 'No parts to serialize')
+  end
 end

@@ -127,8 +127,6 @@ module MicrosoftKiotaAbstractions
         writer.write_object_value(nil, values)
       end
       @content = writer.get_serialized_content
-    rescue StandardError
-      raise StandardError, 'could not serialize payload'
     end
 
     def add_headers_from_raw_object(h)
