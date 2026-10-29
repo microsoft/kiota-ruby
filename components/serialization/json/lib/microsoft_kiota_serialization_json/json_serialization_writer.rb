@@ -112,11 +112,11 @@ module MicrosoftKiotaSerializationJson
 
     def write_collection_of_primitive_values(key, values)
       return unless values
-      return set_root_value(values.map { |v| serialized_scalar(v) }) unless key
 
-      @writer[key] = values.map do |v|
-        write_any_value(key, v)
-      end
+      serialized = values.map { |v| serialized_scalar(v) }
+      return set_root_value(serialized) unless key
+
+      @writer[key] = serialized
     end
 
     def write_collection_of_object_values(key, values)
@@ -198,46 +198,44 @@ module MicrosoftKiotaSerializationJson
       end
     end
 
+    def write_hash_value(key, value)
+      serialized = value.transform_values { |v| serialized_scalar(v) }
+      return set_root_value(serialized) unless key
+
+      @writer[key] = serialized
+    end
+
+    # a composed type wrapper writes its scalar as the root value, which a nested object hash would drop
+    def write_parsable_value(key, value)
+      return write_object_value(nil, value) unless key
+
+      @writer[key] = serialized_scalar(value)
+    end
+
     public
 
     def serialized_scalar(value)
-      return value if value.nil? || value == true || value == false
-
-      temp = JsonSerializationWriter.new
-      result = temp.write_any_value(nil, value)
-      temp.root_value? ? temp.root_value : result
+      temp = child_writer
+      temp.write_any_value(nil, value)
+      temp.root_value? ? temp.root_value : temp.writer
     end
 
     def write_any_value(key, value)
-      if value
-        if !value.nil? == value
-          value
-        elsif value.instance_of? String
-          write_string_value(key, value)
-        elsif value.instance_of? Integer
-          write_number_value(key, value)
-        elsif value.instance_of? Float
-          write_float_value(key, value)
-        elsif value.instance_of? DateTime
-          write_date_time_value(key, value)
-        elsif value.instance_of? Time
-          write_time_value(key, value)
-        elsif value.instance_of? Date
-          write_date_value(key, value)
-        elsif value.instance_of? MicrosoftKiotaAbstractions::ISODuration
-          write_duration_value(key, value)
-        elsif value.instance_of? Array
-          write_collection_of_primitive_values(key, value)
-        elsif value.is_a? Object
-          value.to_s
-        else
-          raise StandardError, "encountered unknown value type during serialization #{value}"
-        end
-      else
-        raise StandardError, 'no key included when writing json property' unless key
-
-        @writer[key] = nil
-
+      case value
+      when nil then write_null_value(key)
+      when true, false then write_boolean_value(key, value)
+      when String, Symbol then write_string_value(key, value.to_s)
+      when Integer then write_number_value(key, value)
+      when Float then write_float_value(key, value)
+      when DateTime then write_date_time_value(key, value)
+      when Time then write_time_value(key, value)
+      when Date then write_date_value(key, value)
+      when MicrosoftKiotaAbstractions::ISODuration then write_duration_value(key, value)
+      when UUIDTools::UUID then write_guid_value(key, value)
+      when Array then write_collection_of_primitive_values(key, value)
+      when Hash then write_hash_value(key, value)
+      when MicrosoftKiotaAbstractions::Parsable then write_parsable_value(key, value)
+      else raise StandardError, "Encountered an unknown type during serialization #{value.class} with key #{key}"
       end
     end
   end
