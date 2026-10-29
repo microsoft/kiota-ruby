@@ -12,12 +12,9 @@ module MicrosoftKiotaSerializationJson
     end
 
     def get_parse_node(content_type, content)
-      if !content_type
-        raise StandardError, 'content type cannot be undefined or empty'
-      elsif get_valid_content_type != content_type
-        raise StandardError, `expected a #{get_valid_content_type} content type`
-      end
-      raise StandardError, 'content cannot be undefined or empty' unless content
+      raise ArgumentError, 'content type cannot be undefined or empty' if content_type.nil? || content_type.empty?
+      raise ArgumentError, "expected a #{get_valid_content_type} content type" unless get_valid_content_type.casecmp?(content_type)
+      raise ArgumentError, 'content cannot be undefined or empty' if content.nil?
 
       JsonParseNode.new(JSON.parse(content))
     end
