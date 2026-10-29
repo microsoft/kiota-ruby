@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.2](https://github.com/microsoft/kiota-ruby/compare/v0.25.1...v0.25.2) (2026-10-29)
+
+
+### Bug Fixes
+
+* **json:** raise the content type error instead of running it as a command ([a163e17](https://github.com/microsoft/kiota-ruby/commit/a163e1792af7f3f7ad5837abae270fc9b0166a86))
+* **json:** raise the content type error instead of running it as a command ([95d56fc](https://github.com/microsoft/kiota-ruby/commit/95d56fcaf7bad04bee414cb43c3b22b18de96655))
+* keep the original error when a request body cannot be serialized ([efa1f22](https://github.com/microsoft/kiota-ruby/commit/efa1f221b236f7164f83a8870f833a557cc71879))
+* keep the original error when a request body cannot be serialized ([6a004c0](https://github.com/microsoft/kiota-ruby/commit/6a004c047c6deb827728f87ea34ffe9185c22270))
+* **oauth:** allow http scheme for localhost and return nil on invalid host ([44703e7](https://github.com/microsoft/kiota-ruby/commit/44703e70cc9130e310021e04dcd4b81fb67ec8bd))
+* **oauth:** derive default scopes per request ([7b19d7d](https://github.com/microsoft/kiota-ruby/commit/7b19d7df07dd7eb495ac5a6c31ec70c006e16ed8))
+* **oauth:** derive default scopes per request ([493d50d](https://github.com/microsoft/kiota-ruby/commit/493d50d7f8f0004eeee0e5c7bee008da9c31cffc))
+* **oauth:** request a new token when an expired token has no refresh token ([409ee54](https://github.com/microsoft/kiota-ruby/commit/409ee54ac34d7f68c419ad19471285825748abba))
+* **oauth:** request a new token when an expired token has no refresh token ([df0ab17](https://github.com/microsoft/kiota-ruby/commit/df0ab172a983aff10ebd45bc3a34ed9659c7d0a4))
+* **oauth:** restore URI validation for localhost requests ([49fd785](https://github.com/microsoft/kiota-ruby/commit/49fd78548579cc801d37e6ba6be5e6d0532289d3))
+* **oauth:** simplify URI validation and correct Ruby matrix ([2dfb618](https://github.com/microsoft/kiota-ruby/commit/2dfb618e336ad44ce60af5ab5e83a1e1c6eea080))
+
 ## [0.25.1](https://github.com/microsoft/kiota-ruby/compare/v0.25.0...v0.25.1) (2026-10-23)
 
 

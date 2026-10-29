@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 module MicrosoftKiotaSerializationForm
-  VERSION = '0.25.1' # x-release-please-version
+  VERSION = '0.25.2' # x-release-please-version
 end
