@@ -17,6 +17,16 @@ RSpec.describe MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider
     expect(request_obj.headers.get(MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider::AUTHORIZATION_HEADER_KEY).at(0)).to eq 'SAMPLE'
   end
 
+  it 'preserves existing lowercase authorization header without requesting new token' do
+    access_token_provider = AccessTokenProviderMock.new
+    token_provider = MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider.new(access_token_provider)
+    request_obj = MicrosoftKiotaAbstractions::RequestInformation.new
+    request_obj.headers.add('authorization', 'ExistingToken')
+    token_provider.authenticate_request(request_obj).resume
+    expect(request_obj.headers.get('Authorization')).to eq(['ExistingToken'])
+    expect(request_obj.headers.get('authorization')).to eq(['ExistingToken'])
+  end
+
   it 'creates a token authentication provider with mock access token' do
     access_token_provider = AccessTokenProviderMock.new
     token_provider = MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider.new(access_token_provider)

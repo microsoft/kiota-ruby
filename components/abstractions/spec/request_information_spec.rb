@@ -109,4 +109,19 @@ RSpec.describe MicrosoftKiotaAbstractions do
     expect { request_info.set_content_from_parsable(adapter, 'multipart/form-data', body) }
       .to raise_error(ArgumentError, 'No parts to serialize')
   end
+
+  it 'adds headers from a raw Hash object' do
+    request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+    request_info.add_headers_from_raw_object({ 'Content-Type' => 'application/json', 'X-Custom' => 'custom-value' })
+    expect(request_info.headers.get('content-type')).to eq(['application/json'])
+    expect(request_info.headers.get('x-custom')).to eq(['custom-value'])
+  end
+
+  it 'adds headers from another RequestHeaders object' do
+    source_headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    source_headers.add('Authorization', 'Bearer token')
+    request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+    request_info.add_headers_from_raw_object(source_headers)
+    expect(request_info.headers.get('authorization')).to eq(['Bearer token'])
+  end
 end

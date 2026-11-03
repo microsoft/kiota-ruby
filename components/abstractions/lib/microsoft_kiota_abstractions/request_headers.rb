@@ -7,46 +7,58 @@ module MicrosoftKiotaAbstractions
     end
 
     def add(key, value)
-      if key.nil? || key.empty? || value.nil? || value.empty?
+      if key.nil? || key.empty? || value.nil? || (value.respond_to?(:empty?) && value.empty?)
         raise ArgumentError, 'key and value cannot be nil or empty'
       end
 
-      existing_value = @headers[key]
-      if existing_value.nil?
+      existing_key = find_key(key)
+      if existing_key.nil?
         @headers[key] = if value.is_a?(Array)
-                          value
+                          value.map(&:to_s)
                         else
                           [value.to_s]
                         end
       elsif value.is_a?(Array)
-        @headers[key] = existing_value | value
+        @headers[existing_key] = @headers[existing_key] | value.map(&:to_s)
       else
-        existing_value << value.to_s
+        @headers[existing_key] = @headers[existing_key] | [value.to_s]
       end
     end
 
     def try_add(key, value)
-      if key.nil? || key.empty? || value.nil? || value.empty?
+      if key.nil? || key.empty? || value.nil? || (value.respond_to?(:empty?) && value.empty?)
         raise ArgumentError, 'key and value cannot be nil or empty'
       end
 
-      existing_value = @headers[key]
-      return false unless existing_value.nil? || existing_value.empty?
+      existing_key = find_key(key)
+      return false if existing_key && !@headers[existing_key].empty?
 
-      @headers[key] = [value.to_s]
+      @headers[existing_key || key] = if value.is_a?(Array)
+                                        value.map(&:to_s)
+                                      else
+                                        [value.to_s]
+                                      end
       true
     end
 
     def get(key)
       raise ArgumentError, 'key cannot be nil or empty' if key.nil? || key.empty?
 
-      @headers[key]
+      existing_key = find_key(key)
+      existing_key ? @headers[existing_key] : nil
     end
 
     def remove(key)
       raise ArgumentError, 'key cannot be nil or empty' if key.nil? || key.empty?
 
-      @headers.delete(key)
+      existing_key = find_key(key)
+      @headers.delete(existing_key) if existing_key
+    end
+
+    def key?(key)
+      return false if key.nil? || key.empty?
+
+      !find_key(key).nil?
     end
 
     def clear
@@ -55,6 +67,17 @@ module MicrosoftKiotaAbstractions
 
     def get_all
       @headers
+    end
+
+    private
+
+    def find_key(key)
+      return key if @headers.key?(key)
+
+      key_str = key.to_s
+      return key_str if @headers.key?(key_str)
+
+      @headers.keys.find { |k| k.to_s.casecmp?(key_str) }
     end
   end
 end
