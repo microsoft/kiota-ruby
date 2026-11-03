@@ -72,10 +72,12 @@ module MicrosoftKiotaAbstractions
     private
 
     def find_key(key)
+      return key if @headers.key?(key)
+
       key_str = key.to_s
       return key_str if @headers.key?(key_str)
 
-      @headers.keys.find { |k| k.casecmp?(key_str) }
+      @headers.keys.find { |k| k.to_s.casecmp?(key_str) }
     end
   end
 end

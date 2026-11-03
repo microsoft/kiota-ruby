@@ -22,7 +22,7 @@ module MicrosoftKiotaAbstractions
       has_auth_header = if request.headers.respond_to?(:key?)
                           request.headers.key?(AUTHORIZATION_HEADER_KEY)
                         else
-                          request.headers.get_all.keys.any? { |k| k.casecmp?(AUTHORIZATION_HEADER_KEY) }
+                          request.headers.get_all.keys.any? { |k| k.to_s.casecmp?(AUTHORIZATION_HEADER_KEY) }
                         end
 
       if has_auth_header

@@ -91,4 +91,30 @@ RSpec.describe MicrosoftKiotaAbstractions do
     headers.add('Accept', 'application/json')
     expect(headers.get('Accept')).to eq(['application/json'])
   end
+
+  it 'handles Symbol header keys interoperably with String keys' do
+    headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    headers.add(:'Content-Type', 'application/json')
+
+    expect(headers.key?('content-type')).to be(true)
+    expect(headers.key?(:'content-type')).to be(true)
+    expect(headers.get('content-type')).to eq(['application/json'])
+    expect(headers.get(:'CONTENT-TYPE')).to eq(['application/json'])
+
+    expect(headers.try_add('Content-Type', 'application/xml')).to be(false)
+    expect(headers.get(:'Content-Type')).to eq(['application/json'])
+
+    headers.add('content-type', 'charset=utf-8')
+    expect(headers.get('content-type')).to eq(['application/json', 'charset=utf-8'])
+
+    headers.remove('content-type')
+    expect(headers.key?(:'Content-Type')).to be(false)
+    expect(headers.get(:'Content-Type')).to be_nil
+
+    headers.add('Authorization', 'Bearer token')
+    expect(headers.key?(:authorization)).to be(true)
+    expect(headers.get(:AUTHORIZATION)).to eq(['Bearer token'])
+    headers.remove(:authorization)
+    expect(headers.key?('Authorization')).to be(false)
+  end
 end
