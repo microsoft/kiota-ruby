@@ -19,7 +19,13 @@ module MicrosoftKiotaAbstractions
       raise StandardError, 'Request cannot be null' if request.nil?
 
       # If request contains already an authorization header, nothing needs to be done.
-      if request.headers.get_all.key?(AUTHORIZATION_HEADER_KEY)
+      has_auth_header = if request.headers.respond_to?(:key?)
+                          request.headers.key?(AUTHORIZATION_HEADER_KEY)
+                        else
+                          request.headers.get_all.keys.any? { |k| k.casecmp?(AUTHORIZATION_HEADER_KEY) }
+                        end
+
+      if has_auth_header
         Fiber.new do
         end
       else

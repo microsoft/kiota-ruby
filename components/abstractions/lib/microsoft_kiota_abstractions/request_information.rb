@@ -130,7 +130,13 @@ module MicrosoftKiotaAbstractions
     end
 
     def add_headers_from_raw_object(h)
-      h&.get_all&.select { |x, y| @headers.add(x.to_s, y) }
+      return if h.nil?
+
+      if h.respond_to?(:get_all)
+        h.get_all.each { |x, y| @headers.add(x.to_s, y) }
+      elsif h.is_a?(Hash)
+        h.each { |x, y| @headers.add(x.to_s, y) }
+      end
     end
 
     def set_query_string_parameters_from_raw_object(q)
@@ -147,7 +153,7 @@ module MicrosoftKiotaAbstractions
         rescue StandardError
           key = method_name
         end
-        value = eval("q.#{method_name}")
+        value = q.public_send(x)
         query_parameters[key] = value unless value.nil?
       end
     end
