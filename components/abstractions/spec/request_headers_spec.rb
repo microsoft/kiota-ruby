@@ -52,4 +52,43 @@ RSpec.describe MicrosoftKiotaAbstractions do
     request_info.headers.clear
     expect(request_info.headers.get_all.length).to eq(0)
   end
+
+  it 'handles header operations case-insensitively' do
+    headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    headers.add('Content-Type', 'application/json')
+
+    expect(headers.key?('content-type')).to be(true)
+    expect(headers.key?('CONTENT-TYPE')).to be(true)
+    expect(headers.get('content-type')).to eq(['application/json'])
+    expect(headers.get('CONTENT-TYPE')).to eq(['application/json'])
+
+    expect(headers.try_add('content-type', 'application/xml')).to be(false)
+    expect(headers.get('Content-Type')).to eq(['application/json'])
+
+    headers.add('content-type', 'charset=utf-8')
+    expect(headers.get('CONTENT-TYPE')).to eq(['application/json', 'charset=utf-8'])
+
+    headers.remove('content-type')
+    expect(headers.key?('Content-Type')).to be(false)
+    expect(headers.get('Content-Type')).to be_nil
+  end
+
+  it 'supports non-string scalar values without raising' do
+    headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    expect { headers.add('Content-Length', 1024) }.not_to raise_error
+    expect(headers.get('Content-Length')).to eq(['1024'])
+
+    expect { headers.try_add('Max-Forwards', 10) }.not_to raise_error
+    expect(headers.get('Max-Forwards')).to eq(['10'])
+
+    headers.add('X-Flag', true)
+    expect(headers.get('X-Flag')).to eq(['true'])
+  end
+
+  it 'deduplicates identical header values' do
+    headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    headers.add('Accept', 'application/json')
+    headers.add('Accept', 'application/json')
+    expect(headers.get('Accept')).to eq(['application/json'])
+  end
 end
