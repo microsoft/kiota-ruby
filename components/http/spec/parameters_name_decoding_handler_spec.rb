@@ -83,4 +83,19 @@ RSpec.describe MicrosoftKiotaFaraday do
     handler.call(env2)
     expect(env2[:url].to_s).to eq('https://graph.microsoft.com/v1.0/users?name=test')
   end
+
+  it 'preserves trailing query separators' do
+    handler = MicrosoftKiotaFaraday::Middleware::ParametersNameDecodingHandler.new
+    env1 = {
+      url: URI.parse('https://graph.microsoft.com/v1.0/users?q=foo%24bar&')
+    }
+    handler.call(env1)
+    expect(env1[:url].to_s).to eq('https://graph.microsoft.com/v1.0/users?q=foo%24bar&')
+
+    env2 = {
+      url: URI.parse('https://graph.microsoft.com/v1.0/users?%24select=displayName&')
+    }
+    handler.call(env2)
+    expect(env2[:url].to_s).to eq('https://graph.microsoft.com/v1.0/users?$select=displayName&')
+  end
 end

@@ -31,7 +31,7 @@ module MicrosoftKiotaFaraday
       def decode_uri_encoded_string(original, characters_to_decode)
         return original if original.nil? || original.empty? || characters_to_decode.nil? || characters_to_decode.empty?
 
-        original.split('&').map do |part|
+        original.split('&', -1).map do |part|
           next part if part.empty?
 
           if part.include?('=')
