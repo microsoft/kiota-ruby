@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/BlockLength
+# rubocop:disable-next Metrics/BlockLength
 RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
   subject(:adapter) { described_class.new(authentication_provider) }
 
@@ -211,4 +211,3 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
     end
   end
 end
-# rubocop:enable Metrics/BlockLength

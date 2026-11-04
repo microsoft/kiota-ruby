@@ -36,19 +36,25 @@ module MicrosoftKiotaAbstractions
           auth_fiber = @access_token_provider.get_authorization_token(request.uri, additional_properties)
           token = auth_fiber.resume if auth_fiber
           unless token.nil? || token.empty?
-            headers = request.headers
-            if headers.nil?
-              headers = RequestHeaders.new
-              if request.respond_to?(:headers=)
-                request.headers = headers
-              elsif request.instance_variable_defined?(:@headers)
-                request.instance_variable_set(:@headers, headers)
-              end
-            end
+            headers = ensure_request_headers(request)
             headers.add(AUTHORIZATION_HEADER_KEY, "Bearer #{token}")
           end
         end
       end
+    end
+
+    private
+
+    def ensure_request_headers(request)
+      return request.headers unless request.headers.nil?
+
+      headers = RequestHeaders.new
+      if request.respond_to?(:headers=)
+        request.headers = headers
+      elsif request.instance_variable_defined?(:@headers)
+        request.instance_variable_set(:@headers, headers)
+      end
+      headers
     end
   end
 end
