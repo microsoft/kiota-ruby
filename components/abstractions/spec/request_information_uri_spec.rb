@@ -87,4 +87,24 @@ RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
     expect(unbracketed_validator.url_host_valid?('http://example.com')).to be(false)
     expect(unbracketed_validator.url_host_valid?('https://example.com')).to be(false)
   end
+
+  it 'accepts nil allowed_hosts and treats it as an empty validator allowing all https hosts' do
+    nil_validator = described_class.new(nil)
+    expect(nil_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(nil_validator.url_host_valid?('https://graph.microsoft.com')).to be(true)
+    expect(nil_validator.url_host_valid?('http://example.com')).to be(false)
+  end
+
+  it 'trims surrounding whitespace from host entries' do
+    padded_validator = described_class.new(['  example.com  ', "  graph.microsoft.com\n"])
+    expect(padded_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(padded_validator.url_host_valid?('https://graph.microsoft.com')).to be(true)
+  end
+
+  it 'returns false for nil, empty, or whitespace-only urls' do
+    validator = described_class.new(['example.com'])
+    [nil, '', '   '].each do |bad_url|
+      expect(validator.url_host_valid?(bad_url)).to be(false)
+    end
+  end
 end
