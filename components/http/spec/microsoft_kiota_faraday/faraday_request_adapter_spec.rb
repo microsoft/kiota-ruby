@@ -91,6 +91,41 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
 
       expect(adapter.get_request_from_request_info(request_info).http_method).to eq(:query)
     end
+
+    it 'populates request options into context even when options context is initially nil' do
+      opt = MicrosoftKiotaFaraday::Middleware::UserAgentOption.new
+      request_info.add_request_options(opt)
+      native_request = Faraday::Request.create(:query)
+      native_request.options = Faraday::RequestOptions.new
+      allow(adapter.client).to receive(:build_request).and_return(native_request)
+
+      req = adapter.get_request_from_request_info(request_info)
+      expect(req.options.context[opt.get_key]).to eq(opt)
+    end
+  end
+
+  describe '#execute_async with ResponseHandlerOption' do
+    let(:request_info) do
+      MicrosoftKiotaAbstractions::RequestInformation.new.tap do |info|
+        info.http_method = :GET
+        info.uri = 'https://example.com/items'
+      end
+    end
+    let(:response) { instance_double(Faraday::Response, status: 500, body: '{"error":"test"}', headers: {}) }
+
+    it 'delegates to custom response handler and returns its result without throwing on error' do
+      custom_option = MicrosoftKiotaFaraday::Middleware::ResponseHandlerOption.new
+      custom_option.async_callback = lambda do |res|
+        Fiber.new { "handled_#{res.status}" }
+      end
+      request_info.add_request_options(custom_option)
+
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new {})
+      allow(adapter.client).to receive(:run_request).and_return(response)
+
+      fiber = adapter.send_async(request_info, ->(_pn) { nil }, nil)
+      expect(fiber.resume).to eq('handled_500')
+    end
   end
 
   describe '#convert_to_native_request_async' do
