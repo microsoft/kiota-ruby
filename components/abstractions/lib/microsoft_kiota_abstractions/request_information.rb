@@ -35,6 +35,8 @@ module MicrosoftKiotaAbstractions
       return @uri unless @uri.nil?
 
       if path_parameters[@@raw_url_key].nil?
+        raise StandardError, 'url_template cannot be nil or empty' if @url_template.nil? || @url_template.empty?
+
         values = path_parameters.merge(query_parameters).transform_values { |v| template_value(v) }
         return URI(StdUriTemplate.expand(@url_template, values))
       end
@@ -132,11 +134,7 @@ module MicrosoftKiotaAbstractions
     def add_headers_from_raw_object(h)
       return if h.nil?
 
-      if h.respond_to?(:get_all)
-        h.get_all.each { |x, y| @headers.add(x.to_s, y) }
-      elsif h.is_a?(Hash)
-        h.each { |x, y| @headers.add(x.to_s, y) }
-      end
+      @headers.add_all(h)
     end
 
     def set_query_string_parameters_from_raw_object(q)

@@ -69,6 +69,16 @@ module MicrosoftKiotaAbstractions
       @headers
     end
 
+    def add_all(other)
+      return if other.nil?
+
+      if other.respond_to?(:get_all)
+        other.get_all.each { |k, v| add(k, v) }
+      elsif other.is_a?(Hash)
+        other.each { |k, v| add(k, v) }
+      end
+    end
+
     private
 
     def find_key(key)
