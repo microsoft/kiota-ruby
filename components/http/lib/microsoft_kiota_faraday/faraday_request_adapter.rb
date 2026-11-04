@@ -165,8 +165,12 @@ module MicrosoftKiotaFaraday
         )
       end
 
-      root_node = get_root_parse_node(response)
-      error = root_node.get_object_value(error_factory) unless root_node.nil?
+      begin
+        root_node = get_root_parse_node(response)
+        error = root_node.get_object_value(error_factory) unless root_node.nil?
+      rescue StandardError
+        error = nil
+      end
       if error.nil?
         raise MicrosoftKiotaAbstractions::ApiError.new("The server returned an unexpected status code:#{status_code}",
                                                        response_status_code: status_code, response_headers: response.headers)
