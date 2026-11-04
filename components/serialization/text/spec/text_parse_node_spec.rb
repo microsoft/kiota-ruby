@@ -149,16 +149,6 @@ RSpec.describe MicrosoftKiotaSerializationText::TextParseNode do
       expect(described_class.new("U2Ftd2Vs\nIGlzIHRoZSBiZXN0").get_byte_array_value).to eq('Samwel is the best')
     end
 
-    it 'reads URL-safe and unpadded base64 byte arrays' do
-      expect(described_class.new('-_8=').get_byte_array_value).to eq("\xFB\xFF".b)
-      expect(described_class.new('-_8').get_byte_array_value).to eq("\xFB\xFF".b)
-      expect(described_class.new('-_').get_byte_array_value).to eq("\xFB".b)
-      expect(described_class.new('YWI').get_byte_array_value).to eq('ab')
-      expect(described_class.new('YQ').get_byte_array_value).to eq('a')
-      expect(described_class.new('U2Ftd2Vs').get_byte_array_value).to eq('Samwel')
-      expect(described_class.new('"U2Ftd2Vs"').get_byte_array_value).to eq('Samwel')
-      expect(described_class.new('"-_8"').get_byte_array_value).to eq("\xFB\xFF".b)
-    end
 
     it 'reads scalar tokens enclosed in double or single quotes' do
       expect(described_class.new('"true"').get_boolean_value).to be(true)
@@ -189,5 +179,18 @@ RSpec.describe MicrosoftKiotaSerializationText::TextParseNode do
       expect(described_class.new('12.5').get_number_value).to be_nil
       expect(described_class.new('twelve').get_float_value).to be_nil
     end
+  end
+end
+
+RSpec.describe MicrosoftKiotaSerializationText::TextParseNode, '#get_byte_array_value' do
+  it 'reads URL-safe and unpadded base64 byte arrays' do
+    expect(described_class.new('-_8=').get_byte_array_value).to eq("\xFB\xFF".b)
+    expect(described_class.new('-_8').get_byte_array_value).to eq("\xFB\xFF".b)
+    expect(described_class.new('-_').get_byte_array_value).to eq("\xFB".b)
+    expect(described_class.new('YWI').get_byte_array_value).to eq('ab')
+    expect(described_class.new('YQ').get_byte_array_value).to eq('a')
+    expect(described_class.new('U2Ftd2Vs').get_byte_array_value).to eq('Samwel')
+    expect(described_class.new('"U2Ftd2Vs"').get_byte_array_value).to eq('Samwel')
+    expect(described_class.new('"-_8"').get_byte_array_value).to eq("\xFB\xFF".b)
   end
 end
