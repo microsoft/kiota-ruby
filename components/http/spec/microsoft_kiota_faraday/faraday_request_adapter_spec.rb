@@ -76,6 +76,14 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
         expect(raised.response_headers).to eq(headers)
       end
     end
+
+    it 'falls back to ApiError with status and headers when failed response has no content type' do
+      no_content_type = instance_double(Faraday::Response, status: 500, body: 'Internal Server Error', headers: {})
+      expect { adapter.throw_if_failed_reponse(no_content_type, { '5XX' => factory }) }.to raise_error(MicrosoftKiotaAbstractions::ApiError) do |raised|
+        expect(raised.response_status_code).to eq(500)
+        expect(raised.response_headers).to eq({})
+      end
+    end
   end
 
   describe '#get_request_from_request_info' do
