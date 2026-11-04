@@ -107,4 +107,25 @@ RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
       expect(validator.url_host_valid?(bad_url)).to be(false)
     end
   end
+
+  it 'rejects a non-empty allowlist containing only blank or nil entries' do
+    ['', '   ', "\t\n"].each do |blank|
+      expect { described_class.new([blank]) }.to raise_error(ArgumentError, /allowed_hosts/)
+    end
+    expect { described_class.new([nil]) }.to raise_error(ArgumentError, /allowed_hosts/)
+    expect { described_class.new(['  ', nil, '']) }.to raise_error(ArgumentError, /allowed_hosts/)
+  end
+
+  it 'preserves existing allowlist when an update containing only blank hosts is rejected' do
+    validator = described_class.new(['example.com'])
+    expect { validator.allowed_hosts = ['   '] }.to raise_error(ArgumentError)
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
+  end
+
+  it 'allows non-empty allowlist with some blank entries as long as at least one valid host remains' do
+    validator = described_class.new(['example.com', '   ', nil])
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
+  end
 end

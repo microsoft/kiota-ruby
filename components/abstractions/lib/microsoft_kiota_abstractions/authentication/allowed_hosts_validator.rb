@@ -15,8 +15,13 @@ module MicrosoftKiotaAbstractions
 
     # sets the list of valid hosts with provided value (val)
     def allowed_hosts=(val)
+      if val.nil? || (val.respond_to?(:empty?) && val.empty?)
+        @allowed_hosts = {}
+        return
+      end
+
       hosts = {}
-      (val || []).each do |host|
+      val.each do |host|
         next if host.nil?
 
         cleaned = host.to_s.strip
@@ -26,6 +31,9 @@ module MicrosoftKiotaAbstractions
 
         hosts[cleaned.downcase] = true
       end
+
+      raise ArgumentError, 'allowed_hosts must contain at least one valid host when provided as a non-empty list' if hosts.empty?
+
       @allowed_hosts = hosts
     end
 
