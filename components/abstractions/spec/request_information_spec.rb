@@ -124,4 +124,12 @@ RSpec.describe MicrosoftKiotaAbstractions do
     request_info.add_headers_from_raw_object(source_headers)
     expect(request_info.headers.get('authorization')).to eq(['Bearer token'])
   end
+
+  it 'raises StandardError when uri is requested but url_template is nil or empty' do
+    request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+    expect { request_info.uri }.to raise_error(StandardError, 'url_template cannot be nil or empty')
+
+    request_info.url_template = ''
+    expect { request_info.uri }.to raise_error(StandardError, 'url_template cannot be nil or empty')
+  end
 end

@@ -46,4 +46,13 @@ RSpec.describe MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider
     expect { token_provider.authenticate_request(request_obj).resume }.not_to raise_error
     expect(request_obj.headers.get_all.key?(header_key)).to be(false)
   end
+
+  it 'safely handles a request with nil headers' do
+    access_token_provider = AccessTokenProviderMock.new
+    token_provider = MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider.new(access_token_provider)
+    request_obj = MicrosoftKiotaAbstractions::RequestInformation.new
+    request_obj.instance_variable_set(:@headers, nil)
+    request_obj.uri = 'http://sample.com'
+    expect { token_provider.authenticate_request(request_obj).resume }.not_to raise_error
+  end
 end

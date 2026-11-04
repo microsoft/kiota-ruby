@@ -117,4 +117,32 @@ RSpec.describe MicrosoftKiotaAbstractions do
     headers.remove(:authorization)
     expect(headers.key?('Authorization')).to be(false)
   end
+
+  it 'adds all headers from another RequestHeaders instance' do
+    source = MicrosoftKiotaAbstractions::RequestHeaders.new
+    source.add('Accept', 'application/json')
+    source.add('User-Agent', 'test-client')
+
+    target = MicrosoftKiotaAbstractions::RequestHeaders.new
+    target.add('Authorization', 'Bearer token')
+    target.add_all(source)
+
+    expect(target.get('Accept')).to eq(['application/json'])
+    expect(target.get('User-Agent')).to eq(['test-client'])
+    expect(target.get('Authorization')).to eq(['Bearer token'])
+  end
+
+  it 'adds all headers from a Hash' do
+    target = MicrosoftKiotaAbstractions::RequestHeaders.new
+    target.add_all({ 'Accept' => 'application/json', 'X-Custom' => 'value' })
+
+    expect(target.get('Accept')).to eq(['application/json'])
+    expect(target.get('X-Custom')).to eq(['value'])
+  end
+
+  it 'ignores nil in add_all' do
+    target = MicrosoftKiotaAbstractions::RequestHeaders.new
+    expect { target.add_all(nil) }.not_to raise_error
+    expect(target.get_all).to be_empty
+  end
 end
