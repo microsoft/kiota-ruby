@@ -93,6 +93,29 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
     end
   end
 
+  describe '#convert_to_native_request_async' do
+    let(:request_info) do
+      MicrosoftKiotaAbstractions::RequestInformation.new.tap do |info|
+        info.http_method = :GET
+        info.uri = 'https://example.com/items'
+      end
+    end
+
+    it 'raises when request_info is null' do
+      expect { adapter.convert_to_native_request_async(nil) }.to raise_error(StandardError, 'request_info cannot be null')
+    end
+
+    it 'converts request information to a native Faraday request without LocalJumpError' do
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new {})
+      fiber = adapter.convert_to_native_request_async(request_info)
+      native_request = fiber.resume
+
+      expect(native_request).to be_a(Faraday::Request)
+      expect(native_request.http_method).to eq(:get)
+      expect(native_request.path).to eq(URI('https://example.com/items'))
+    end
+  end
+
   describe '#get_root_parse_node' do
     context 'when response is null' do
       it 'raises an error' do
