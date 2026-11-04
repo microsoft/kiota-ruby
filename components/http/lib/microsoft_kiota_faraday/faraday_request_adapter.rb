@@ -117,9 +117,12 @@ module MicrosoftKiotaFaraday
         response = @client.run_request(request.http_method, request.path, request.body, request.headers)
 
         response_handler = get_response_handler(request_info)
-        response_handler&.call(response)&.resume
-        throw_if_failed_reponse(response, errors_mapping)
-        yield response
+        if response_handler
+          response_handler.call(response)&.resume
+        else
+          throw_if_failed_reponse(response, errors_mapping)
+          yield response
+        end
       end
     end
 
@@ -197,6 +200,7 @@ module MicrosoftKiotaFaraday
       request_options = request_info.get_request_options
       if !request_options.nil? && !request_options.empty?
         request.options = Faraday::RequestOptions.new if request.options.nil?
+        request.options.context ||= {}
         request_options.each do |value|
           request.options.context[value.get_key] = value
         end
