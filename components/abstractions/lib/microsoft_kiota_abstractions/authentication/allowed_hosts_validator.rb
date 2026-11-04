@@ -16,20 +16,25 @@ module MicrosoftKiotaAbstractions
     # sets the list of valid hosts with provided value (val)
     def allowed_hosts=(val)
       hosts = {}
-      val.each do |host|
-        raise ArgumentError, "host should not contain http or https prefix: #{host}" if host.match?(%r{\Ahttps?://}i)
+      (val || []).each do |host|
+        next if host.nil?
 
-        hosts[host.downcase] = true
+        cleaned = host.to_s.strip
+        next if cleaned.empty?
+
+        raise ArgumentError, "host should not contain http or https prefix: #{cleaned}" if cleaned.match?(%r{\Ahttps?://}i)
+
+        hosts[cleaned.downcase] = true
       end
       @allowed_hosts = hosts
     end
 
     # checks whether the provided host is valid
     def url_host_valid?(url)
-      return false if url.nil?
+      return false if url.nil? || (url.respond_to?(:empty?) && url.empty?)
 
       begin
-        parsed_url = URI(url)
+        parsed_url = URI(url.respond_to?(:strip) ? url.strip : url)
       rescue URI::InvalidURIError, ArgumentError
         return false
       end
