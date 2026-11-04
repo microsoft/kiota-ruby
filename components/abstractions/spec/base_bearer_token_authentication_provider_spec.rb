@@ -53,6 +53,8 @@ RSpec.describe MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider
     request_obj = MicrosoftKiotaAbstractions::RequestInformation.new
     request_obj.instance_variable_set(:@headers, nil)
     request_obj.uri = 'http://sample.com'
-    expect { token_provider.authenticate_request(request_obj).resume }.not_to raise_error
+    token_provider.authenticate_request(request_obj).resume
+    auth_header = MicrosoftKiotaAbstractions::BaseBearerTokenAuthenticationProvider::AUTHORIZATION_HEADER_KEY
+    expect(request_obj.headers.get(auth_header).at(0)).to eq "Bearer #{AccessTokenProviderMock::DUMMY_TOKEN}"
   end
 end

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/BlockLength
 RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
   subject(:adapter) { described_class.new(authentication_provider) }
 
@@ -128,10 +129,10 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
       end
       request_info.add_request_options(custom_option)
 
-      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new {})
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new { nil })
       allow(adapter.client).to receive(:run_request).and_return(response)
 
-      fiber = adapter.send_async(request_info, ->(_pn) { nil }, nil)
+      fiber = adapter.send_async(request_info, ->(_pn) {}, nil)
       expect(fiber.resume).to eq('handled_500')
     end
   end
@@ -149,7 +150,7 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
     end
 
     it 'converts request information to a native Faraday request without LocalJumpError' do
-      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new {})
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new { nil })
       fiber = adapter.convert_to_native_request_async(request_info)
       native_request = fiber.resume
 
@@ -210,3 +211,4 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
     end
   end
 end
+# rubocop:enable Metrics/BlockLength
