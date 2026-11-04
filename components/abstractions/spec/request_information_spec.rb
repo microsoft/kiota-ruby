@@ -117,6 +117,13 @@ RSpec.describe MicrosoftKiotaAbstractions do
     expect(request_info.headers.get('x-custom')).to eq(['custom-value'])
   end
 
+  it 'adds headers from a raw Hash object with non-string keys' do
+    request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+    request_info.add_headers_from_raw_object({ 123 => 'numeric-val', :symbol_header => 'sym-val' })
+    expect(request_info.headers.get('123')).to eq(['numeric-val'])
+    expect(request_info.headers.get('symbol_header')).to eq(['sym-val'])
+  end
+
   it 'adds headers from another RequestHeaders object' do
     source_headers = MicrosoftKiotaAbstractions::RequestHeaders.new
     source_headers.add('Authorization', 'Bearer token')

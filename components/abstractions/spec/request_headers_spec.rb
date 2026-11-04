@@ -140,6 +140,27 @@ RSpec.describe MicrosoftKiotaAbstractions do
     expect(target.get('X-Custom')).to eq(['value'])
   end
 
+  it 'adds all headers from a Hash with non-string keys' do
+    target = MicrosoftKiotaAbstractions::RequestHeaders.new
+    target.add_all({ 123 => 'numeric-header', :symbol_header => 'sym-val' })
+
+    expect(target.get('123')).to eq(['numeric-header'])
+    expect(target.get('symbol_header')).to eq(['sym-val'])
+  end
+
+  it 'handles non-string keys in direct header operations' do
+    headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    headers.add(123, 'num-header')
+    expect(headers.key?(123)).to be(true)
+    expect(headers.key?('123')).to be(true)
+    expect(headers.get(123)).to eq(['num-header'])
+    expect(headers.get('123')).to eq(['num-header'])
+
+    expect(headers.try_add(123, 'num-header-2')).to be(false)
+    headers.remove(123)
+    expect(headers.key?(123)).to be(false)
+  end
+
   it 'ignores nil in add_all' do
     target = MicrosoftKiotaAbstractions::RequestHeaders.new
     expect { target.add_all(nil) }.not_to raise_error
