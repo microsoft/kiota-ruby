@@ -216,7 +216,7 @@ module MicrosoftKiotaFaraday
       Fiber.new do
         set_base_url_for_request_information(request_info)
         @authentication_provider.authenticate_request(request_info).resume
-        return get_request_from_request_info(request_info)
+        get_request_from_request_info(request_info)
       end
     end
 
