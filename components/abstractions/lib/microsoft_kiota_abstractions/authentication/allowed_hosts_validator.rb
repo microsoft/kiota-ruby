@@ -15,7 +15,15 @@ module MicrosoftKiotaAbstractions
 
     # sets the list of valid hosts with provided value (val)
     def allowed_hosts=(val)
-      if val.nil? || (val.respond_to?(:empty?) && val.empty?)
+      if val.nil?
+        @allowed_hosts = {}
+        return
+      end
+
+      raise ArgumentError, 'allowed_hosts cannot be a string' if val.is_a?(String)
+      raise ArgumentError, 'allowed_hosts must be an Enumerable collection or nil' unless val.respond_to?(:each)
+
+      if val.respond_to?(:empty?) && val.empty?
         @allowed_hosts = {}
         return
       end
