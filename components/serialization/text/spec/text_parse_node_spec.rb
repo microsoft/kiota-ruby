@@ -151,8 +151,13 @@ RSpec.describe MicrosoftKiotaSerializationText::TextParseNode do
 
     it 'reads URL-safe and unpadded base64 byte arrays' do
       expect(described_class.new('-_8=').get_byte_array_value).to eq("\xFB\xFF".b)
+      expect(described_class.new('-_8').get_byte_array_value).to eq("\xFB\xFF".b)
+      expect(described_class.new('-_').get_byte_array_value).to eq("\xFB".b)
+      expect(described_class.new('YWI').get_byte_array_value).to eq('ab')
+      expect(described_class.new('YQ').get_byte_array_value).to eq('a')
       expect(described_class.new('U2Ftd2Vs').get_byte_array_value).to eq('Samwel')
       expect(described_class.new('"U2Ftd2Vs"').get_byte_array_value).to eq('Samwel')
+      expect(described_class.new('"-_8"').get_byte_array_value).to eq("\xFB\xFF".b)
     end
 
     it 'reads scalar tokens enclosed in double or single quotes' do
