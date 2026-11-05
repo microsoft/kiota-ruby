@@ -155,10 +155,20 @@ RSpec.describe MicrosoftKiotaAbstractions do
     expect(headers.key?('123')).to be(true)
     expect(headers.get(123)).to eq(['num-header'])
     expect(headers.get('123')).to eq(['num-header'])
+    expect(headers.get_all.keys).to contain_exactly('123')
+    expect(headers.get_all.keys.first).to be_a(String)
 
     expect(headers.try_add(123, 'num-header-2')).to be(false)
     headers.remove(123)
     expect(headers.key?(123)).to be(false)
+  end
+
+  it 'stores non-string keys as strings in get_all' do
+    headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    headers.add(123, 'num-header')
+    headers.try_add(456, 'num-header-2')
+    expect(headers.get_all.keys).to contain_exactly('123', '456')
+    expect(headers.get_all.keys).to all(be_a(String))
   end
 
   it 'ignores nil in add_all' do
