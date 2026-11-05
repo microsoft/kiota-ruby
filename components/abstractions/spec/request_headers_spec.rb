@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require 'microsoft_kiota_abstractions'
-RSpec.describe MicrosoftKiotaAbstractions do
+
+RSpec.describe 'RequestHeaders through RequestInformation' do
   it 'adds a request header to the request information' do
     request_info = MicrosoftKiotaAbstractions::RequestInformation.new
     request_info.headers.add('key', 'value')
@@ -52,7 +53,9 @@ RSpec.describe MicrosoftKiotaAbstractions do
     request_info.headers.clear
     expect(request_info.headers.get_all.length).to eq(0)
   end
+end
 
+RSpec.describe MicrosoftKiotaAbstractions::RequestHeaders do
   it 'handles header operations case-insensitively' do
     headers = MicrosoftKiotaAbstractions::RequestHeaders.new
     headers.add('Content-Type', 'application/json')
@@ -118,36 +121,6 @@ RSpec.describe MicrosoftKiotaAbstractions do
     expect(headers.key?('Authorization')).to be(false)
   end
 
-  it 'adds all headers from another RequestHeaders instance' do
-    source = MicrosoftKiotaAbstractions::RequestHeaders.new
-    source.add('Accept', 'application/json')
-    source.add('User-Agent', 'test-client')
-
-    target = MicrosoftKiotaAbstractions::RequestHeaders.new
-    target.add('Authorization', 'Bearer token')
-    target.add_all(source)
-
-    expect(target.get('Accept')).to eq(['application/json'])
-    expect(target.get('User-Agent')).to eq(['test-client'])
-    expect(target.get('Authorization')).to eq(['Bearer token'])
-  end
-
-  it 'adds all headers from a Hash' do
-    target = MicrosoftKiotaAbstractions::RequestHeaders.new
-    target.add_all({ 'Accept' => 'application/json', 'X-Custom' => 'value' })
-
-    expect(target.get('Accept')).to eq(['application/json'])
-    expect(target.get('X-Custom')).to eq(['value'])
-  end
-
-  it 'adds all headers from a Hash with non-string keys' do
-    target = MicrosoftKiotaAbstractions::RequestHeaders.new
-    target.add_all({ 123 => 'numeric-header', :symbol_header => 'sym-val' })
-
-    expect(target.get('123')).to eq(['numeric-header'])
-    expect(target.get('symbol_header')).to eq(['sym-val'])
-  end
-
   it 'handles non-string keys in direct header operations' do
     headers = MicrosoftKiotaAbstractions::RequestHeaders.new
     headers.add(123, 'num-header')
@@ -185,6 +158,38 @@ RSpec.describe MicrosoftKiotaAbstractions do
 
     headers.remove(:authorization)
     expect(headers.key?('authorization')).to be(false)
+  end
+end
+
+RSpec.describe 'MicrosoftKiotaAbstractions::RequestHeaders#add_all' do
+  it 'adds all headers from another RequestHeaders instance' do
+    source = MicrosoftKiotaAbstractions::RequestHeaders.new
+    source.add('Accept', 'application/json')
+    source.add('User-Agent', 'test-client')
+
+    target = MicrosoftKiotaAbstractions::RequestHeaders.new
+    target.add('Authorization', 'Bearer token')
+    target.add_all(source)
+
+    expect(target.get('Accept')).to eq(['application/json'])
+    expect(target.get('User-Agent')).to eq(['test-client'])
+    expect(target.get('Authorization')).to eq(['Bearer token'])
+  end
+
+  it 'adds all headers from a Hash' do
+    target = MicrosoftKiotaAbstractions::RequestHeaders.new
+    target.add_all({ 'Accept' => 'application/json', 'X-Custom' => 'value' })
+
+    expect(target.get('Accept')).to eq(['application/json'])
+    expect(target.get('X-Custom')).to eq(['value'])
+  end
+
+  it 'adds all headers from a Hash with non-string keys' do
+    target = MicrosoftKiotaAbstractions::RequestHeaders.new
+    target.add_all({ 123 => 'numeric-header', :symbol_header => 'sym-val' })
+
+    expect(target.get('123')).to eq(['numeric-header'])
+    expect(target.get('symbol_header')).to eq(['sym-val'])
   end
 
   it 'ignores nil in add_all' do
