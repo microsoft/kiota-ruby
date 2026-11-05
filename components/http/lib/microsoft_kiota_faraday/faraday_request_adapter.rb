@@ -21,16 +21,9 @@ module MicrosoftKiotaFaraday
 
       @authentication_provider = authentication_provider
       @content_type_header_key = 'Content-Type'
-      @parse_node_factory = parse_node_factory
-      if @parse_node_factory.nil?
-        @parse_node_factory = MicrosoftKiotaAbstractions::ParseNodeFactoryRegistry.default_instance
-      end
-      @serialization_writer_factory = serialization_writer_factory
-      if @serialization_writer_factory.nil?
-        @serialization_writer_factory = MicrosoftKiotaAbstractions::SerializationWriterFactoryRegistry.default_instance
-      end
-      @client = client
-      @client = KiotaClientFactory.get_default_http_client if @client.nil?
+      @parse_node_factory = parse_node_factory || MicrosoftKiotaAbstractions::ParseNodeFactoryRegistry.default_instance
+      @serialization_writer_factory = serialization_writer_factory || MicrosoftKiotaAbstractions::SerializationWriterFactoryRegistry.default_instance
+      @client = client || KiotaClientFactory.get_default_http_client
       @base_url = ''
     end
 
@@ -117,17 +110,20 @@ module MicrosoftKiotaFaraday
         response = @client.run_request(request.http_method, request.path, request.body, request.headers)
 
         response_handler = get_response_handler(request_info)
-        response_handler&.call(response)&.resume
-        throw_if_failed_reponse(response, errors_mapping)
-        yield response
+        if response_handler
+          response_handler.call(response)&.resume
+        else
+          throw_if_failed_reponse(response, errors_mapping)
+          yield response
+        end
       end
     end
 
     def get_response_handler(request_info)
-      unless request_info.nil?
-        option = request_info.get_request_option(MicrosoftKiotaFaraday::Middleware::ResponseHandlerOption::RESPONSE_HANDLER_KEY)
-      end
-      option.async_callback unless !option || option.nil?
+      return nil if request_info.nil?
+
+      option = request_info.get_request_option(MicrosoftKiotaFaraday::Middleware::ResponseHandlerOption::RESPONSE_HANDLER_KEY)
+      option&.async_callback
     end
 
     def get_root_parse_node(response)
@@ -147,14 +143,7 @@ module MicrosoftKiotaFaraday
       status_code = response.status
       return if status_code < 400
 
-      error_factory = errors_mapping[status_code.to_s] unless errors_mapping.nil?
-      error_factory = errors_mapping['4XX'] unless !error_factory.nil? || errors_mapping.nil? || status_code >= 500
-      unless !error_factory.nil? || errors_mapping.nil? || status_code < 500 || status_code >= 600
-        error_factory = errors_mapping['5XX']
-      end
-      unless !error_factory.nil? || errors_mapping.nil? || status_code < 400 || status_code >= 600
-        error_factory = errors_mapping['XXX']
-      end
+      error_factory = resolve_error_factory(errors_mapping, status_code)
       if error_factory.nil?
         raise MicrosoftKiotaAbstractions::ApiError.new(
           "The server returned an unexpected status code and no error factory is registered for this code:#{status_code}",
@@ -162,8 +151,12 @@ module MicrosoftKiotaFaraday
         )
       end
 
-      root_node = get_root_parse_node(response)
-      error = root_node.get_object_value(error_factory) unless root_node.nil?
+      begin
+        root_node = get_root_parse_node(response)
+        error = root_node.get_object_value(error_factory) unless root_node.nil?
+      rescue StandardError
+        error = nil
+      end
       if error.nil?
         raise MicrosoftKiotaAbstractions::ApiError.new("The server returned an unexpected status code:#{status_code}",
                                                        response_status_code: status_code, response_headers: response.headers)
@@ -184,19 +177,14 @@ module MicrosoftKiotaFaraday
       unless request_info.headers.nil?
         request.headers = Faraday::Utils::Headers.new
         request_info.headers.get_all.select do |k, v|
-          request.headers[k] = if v.is_a? Array
-                                 v.join(',')
-                               elsif v.is_a? String
-                                 v
-                               else
-                                 v.to_s
-                               end
+          request.headers[k.to_s] = v.is_a?(Array) ? v.join(',') : v.to_s
         end
       end
       RequestBody.apply(request, request_info.content)
       request_options = request_info.get_request_options
       if !request_options.nil? && !request_options.empty?
         request.options = Faraday::RequestOptions.new if request.options.nil?
+        request.options.context ||= {}
         request_options.each do |value|
           request.options.context[value.get_key] = value
         end
@@ -216,7 +204,7 @@ module MicrosoftKiotaFaraday
       Fiber.new do
         set_base_url_for_request_information(request_info)
         @authentication_provider.authenticate_request(request_info).resume
-        return get_request_from_request_info(request_info)
+        get_request_from_request_info(request_info)
       end
     end
 
@@ -224,6 +212,15 @@ module MicrosoftKiotaFaraday
 
     def set_base_url_for_request_information(request_info)
       request_info.path_parameters['baseurl'] = @base_url
+    end
+
+    def resolve_error_factory(errors_mapping, status_code)
+      return nil if errors_mapping.nil?
+
+      errors_mapping[status_code.to_s] ||
+        (errors_mapping['4XX'] if (400...500).cover?(status_code)) ||
+        (errors_mapping['5XX'] if (500...600).cover?(status_code)) ||
+        (errors_mapping['XXX'] if (400...600).cover?(status_code))
     end
 
     # an error the factory built learns the response details only once it is deserialized

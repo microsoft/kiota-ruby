@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable-next Metrics/BlockLength
 RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
   subject(:adapter) { described_class.new(authentication_provider) }
 
@@ -76,6 +77,14 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
         expect(raised.response_headers).to eq(headers)
       end
     end
+
+    it 'falls back to ApiError with status and headers when failed response has no content type' do
+      no_content_type = instance_double(Faraday::Response, status: 500, body: 'Internal Server Error', headers: {})
+      expect { adapter.throw_if_failed_reponse(no_content_type, { '5XX' => factory }) }.to raise_error(MicrosoftKiotaAbstractions::ApiError) do |raised|
+        expect(raised.response_status_code).to eq(500)
+        expect(raised.response_headers).to eq({})
+      end
+    end
   end
 
   describe '#get_request_from_request_info' do
@@ -90,6 +99,77 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
       expect(adapter.client).to receive(:build_request).with(:query).and_call_original
 
       expect(adapter.get_request_from_request_info(request_info).http_method).to eq(:query)
+    end
+
+    it 'populates request options into context even when options context is initially nil' do
+      opt = MicrosoftKiotaFaraday::Middleware::UserAgentOption.new
+      request_info.add_request_options(opt)
+      native_request = Faraday::Request.create(:query)
+      native_request.options = Faraday::RequestOptions.new
+      allow(adapter.client).to receive(:build_request).and_return(native_request)
+
+      req = adapter.get_request_from_request_info(request_info)
+      expect(req.options.context[opt.get_key]).to eq(opt)
+    end
+  end
+
+  describe '#execute_async with ResponseHandlerOption' do
+    let(:request_info) do
+      MicrosoftKiotaAbstractions::RequestInformation.new.tap do |info|
+        info.http_method = :GET
+        info.uri = 'https://example.com/items'
+      end
+    end
+    let(:response) { instance_double(Faraday::Response, status: 500, body: '{"error":"test"}', headers: {}) }
+
+    it 'delegates to custom response handler and returns its result without throwing on error' do
+      custom_option = MicrosoftKiotaFaraday::Middleware::ResponseHandlerOption.new
+      custom_option.async_callback = lambda do |res|
+        Fiber.new { "handled_#{res.status}" }
+      end
+      request_info.add_request_options(custom_option)
+
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new { nil })
+      allow(adapter.client).to receive(:run_request).and_return(response)
+
+      fiber = adapter.send_async(request_info, ->(_pn) {}, nil)
+      expect(fiber.resume).to eq('handled_500')
+    end
+  end
+
+  describe '#convert_to_native_request_async' do
+    let(:request_info) do
+      MicrosoftKiotaAbstractions::RequestInformation.new.tap do |info|
+        info.http_method = :GET
+        info.uri = 'https://example.com/items'
+      end
+    end
+
+    it 'raises when request_info is null' do
+      expect { adapter.convert_to_native_request_async(nil) }.to raise_error(StandardError, 'request_info cannot be null')
+    end
+
+    it 'converts request information to a native Faraday request without LocalJumpError' do
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new { nil })
+      fiber = adapter.convert_to_native_request_async(request_info)
+      native_request = fiber.resume
+
+      expect(native_request).to be_a(Faraday::Request)
+      expect(native_request.http_method).to eq(:get)
+      expect(native_request.path).to eq(URI('https://example.com/items'))
+    end
+
+    it 'converts request with numeric and symbol header keys without error' do
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new { nil })
+      request_info.headers.add(123, 'numeric-header-val')
+      request_info.headers.add(:custom_symbol, 'symbol-header-val')
+
+      fiber = adapter.convert_to_native_request_async(request_info)
+      native_request = fiber.resume
+
+      expect(native_request).to be_a(Faraday::Request)
+      expect(native_request.headers['123']).to eq('numeric-header-val')
+      expect(native_request.headers['custom_symbol']).to eq('symbol-header-val')
     end
   end
 

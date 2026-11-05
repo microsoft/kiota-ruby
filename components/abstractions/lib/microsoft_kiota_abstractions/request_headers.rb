@@ -7,10 +7,11 @@ module MicrosoftKiotaAbstractions
     end
 
     def add(key, value)
-      if key.nil? || key.empty? || value.nil? || (value.respond_to?(:empty?) && value.empty?)
+      if key.nil? || key.to_s.empty? || value.nil? || (value.respond_to?(:empty?) && value.empty?)
         raise ArgumentError, 'key and value cannot be nil or empty'
       end
 
+      key = key.to_s
       existing_key = find_key(key)
       if existing_key.nil?
         @headers[key] = if value.is_a?(Array)
@@ -26,10 +27,11 @@ module MicrosoftKiotaAbstractions
     end
 
     def try_add(key, value)
-      if key.nil? || key.empty? || value.nil? || (value.respond_to?(:empty?) && value.empty?)
+      if key.nil? || key.to_s.empty? || value.nil? || (value.respond_to?(:empty?) && value.empty?)
         raise ArgumentError, 'key and value cannot be nil or empty'
       end
 
+      key = key.to_s
       existing_key = find_key(key)
       return false if existing_key && !@headers[existing_key].empty?
 
@@ -42,23 +44,23 @@ module MicrosoftKiotaAbstractions
     end
 
     def get(key)
-      raise ArgumentError, 'key cannot be nil or empty' if key.nil? || key.empty?
+      raise ArgumentError, 'key cannot be nil or empty' if key.nil? || key.to_s.empty?
 
-      existing_key = find_key(key)
+      existing_key = find_key(key.to_s)
       existing_key ? @headers[existing_key] : nil
     end
 
     def remove(key)
-      raise ArgumentError, 'key cannot be nil or empty' if key.nil? || key.empty?
+      raise ArgumentError, 'key cannot be nil or empty' if key.nil? || key.to_s.empty?
 
-      existing_key = find_key(key)
+      existing_key = find_key(key.to_s)
       @headers.delete(existing_key) if existing_key
     end
 
     def key?(key)
-      return false if key.nil? || key.empty?
+      return false if key.nil? || key.to_s.empty?
 
-      !find_key(key).nil?
+      !find_key(key.to_s).nil?
     end
 
     def clear
@@ -67,6 +69,16 @@ module MicrosoftKiotaAbstractions
 
     def get_all
       @headers
+    end
+
+    def add_all(other)
+      return if other.nil?
+
+      if other.respond_to?(:get_all)
+        other.get_all.each { |k, v| add(k.to_s, v) }
+      elsif other.is_a?(Hash)
+        other.each { |k, v| add(k.to_s, v) }
+      end
     end
 
     private

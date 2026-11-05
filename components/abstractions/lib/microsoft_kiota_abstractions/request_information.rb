@@ -10,7 +10,8 @@ require_relative 'request_headers'
 
 module MicrosoftKiotaAbstractions
   class RequestInformation
-    attr_reader :content, :http_method, :headers
+    attr_reader :content, :http_method
+    attr_writer :headers
     attr_accessor :url_template, :path_parameters, :query_parameters
 
     @@binary_content_type = 'application/octet-stream'
@@ -21,6 +22,10 @@ module MicrosoftKiotaAbstractions
       @headers = RequestHeaders.new
       @query_parameters = {}
       @path_parameters = {}
+    end
+
+    def headers
+      @headers ||= RequestHeaders.new
     end
 
     def uri=(arg)
@@ -35,6 +40,8 @@ module MicrosoftKiotaAbstractions
       return @uri unless @uri.nil?
 
       if path_parameters[@@raw_url_key].nil?
+        raise StandardError, 'url_template cannot be nil or empty' if @url_template.nil? || @url_template.empty?
+
         values = path_parameters.merge(query_parameters).transform_values { |v| template_value(v) }
         return URI(StdUriTemplate.expand(@url_template, values))
       end
@@ -82,7 +89,7 @@ module MicrosoftKiotaAbstractions
     def set_stream_content(value = $stdin, content_type)
       @content = value
       content_type = @@binary_content_type if content_type.nil? || content_type.empty?
-      @headers.try_add(@@content_type_header, content_type)
+      headers.try_add(@@content_type_header, content_type)
     end
 
     SCALAR_WRITERS = {
@@ -101,7 +108,7 @@ module MicrosoftKiotaAbstractions
 
     def set_content_from_scalar(request_adapter, content_type, values)
       writer = request_adapter.get_serialization_writer_factory.get_serialization_writer(content_type)
-      @headers.try_add(@@content_type_header, content_type)
+      headers.try_add(@@content_type_header, content_type)
       if values.is_a?(Array)
         writer.write_collection_of_primitive_values(nil, values)
       else
@@ -118,9 +125,9 @@ module MicrosoftKiotaAbstractions
       if values.is_a?(MultipartBody)
         content_type = "#{content_type.gsub(/;\s*boundary=[^;]*/i, '')}; boundary=#{values.boundary}"
         values.request_adapter = request_adapter
-        @headers.remove(@@content_type_header)
+        headers.remove(@@content_type_header)
       end
-      @headers.try_add(@@content_type_header, content_type)
+      headers.try_add(@@content_type_header, content_type)
       if !values.nil? && values.is_a?(Array)
         writer.write_collection_of_object_values(nil, values)
       else
@@ -132,11 +139,7 @@ module MicrosoftKiotaAbstractions
     def add_headers_from_raw_object(h)
       return if h.nil?
 
-      if h.respond_to?(:get_all)
-        h.get_all.each { |x, y| @headers.add(x.to_s, y) }
-      elsif h.is_a?(Hash)
-        h.each { |x, y| @headers.add(x.to_s, y) }
-      end
+      headers.add_all(h)
     end
 
     def set_query_string_parameters_from_raw_object(q)
