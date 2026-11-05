@@ -171,6 +171,22 @@ RSpec.describe MicrosoftKiotaAbstractions do
     expect(headers.get_all.keys).to all(be_a(String))
   end
 
+  it 'handles symbol keys and case-insensitive matching across types' do
+    headers = MicrosoftKiotaAbstractions::RequestHeaders.new
+    headers.add(:authorization, 'Bearer 1')
+    expect(headers.get_all.keys).to contain_exactly('authorization')
+    expect(headers.key?('AUTHORIZATION')).to be(true)
+    expect(headers.key?(:authorization)).to be(true)
+
+    headers.add('AUTHORIZATION', 'Bearer 2')
+    expect(headers.get('authorization')).to eq(['Bearer 1', 'Bearer 2'])
+    expect(headers.get(:authorization)).to eq(['Bearer 1', 'Bearer 2'])
+    expect(headers.get_all.keys.size).to eq(1)
+
+    headers.remove(:authorization)
+    expect(headers.key?('authorization')).to be(false)
+  end
+
   it 'ignores nil in add_all' do
     target = MicrosoftKiotaAbstractions::RequestHeaders.new
     expect { target.add_all(nil) }.not_to raise_error
