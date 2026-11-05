@@ -177,7 +177,7 @@ module MicrosoftKiotaFaraday
       unless request_info.headers.nil?
         request.headers = Faraday::Utils::Headers.new
         request_info.headers.get_all.select do |k, v|
-          request.headers[k] = v.is_a?(Array) ? v.join(',') : v.to_s
+          request.headers[k.to_s] = v.is_a?(Array) ? v.join(',') : v.to_s
         end
       end
       RequestBody.apply(request, request_info.content)
