@@ -149,7 +149,6 @@ RSpec.describe MicrosoftKiotaSerializationText::TextParseNode do
       expect(described_class.new("U2Ftd2Vs\nIGlzIHRoZSBiZXN0").get_byte_array_value).to eq('Samwel is the best')
     end
 
-
     it 'reads scalar tokens enclosed in double or single quotes' do
       expect(described_class.new('"true"').get_boolean_value).to be(true)
       expect(described_class.new("'false'").get_boolean_value).to be(false)
