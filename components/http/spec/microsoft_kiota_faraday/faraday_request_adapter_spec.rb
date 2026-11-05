@@ -158,6 +158,19 @@ RSpec.describe MicrosoftKiotaFaraday::FaradayRequestAdapter do
       expect(native_request.http_method).to eq(:get)
       expect(native_request.path).to eq(URI('https://example.com/items'))
     end
+
+    it 'converts request with numeric and symbol header keys without error' do
+      allow(authentication_provider).to receive(:authenticate_request).with(request_info).and_return(Fiber.new { nil })
+      request_info.headers.add(123, 'numeric-header-val')
+      request_info.headers.add(:custom_symbol, 'symbol-header-val')
+
+      fiber = adapter.convert_to_native_request_async(request_info)
+      native_request = fiber.resume
+
+      expect(native_request).to be_a(Faraday::Request)
+      expect(native_request.headers['123']).to eq('numeric-header-val')
+      expect(native_request.headers['custom_symbol']).to eq('symbol-header-val')
+    end
   end
 
   describe '#get_root_parse_node' do
