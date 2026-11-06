@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.3](https://github.com/microsoft/kiota-ruby/compare/v0.25.2...v0.25.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* **abstractions:** add RequestHeaders add_all and harden uri template and header nil safety ([01e3fb7](https://github.com/microsoft/kiota-ruby/commit/01e3fb773a26e2a246077dd9bd62a88b65c2d4ed))
+* **abstractions:** case-insensitive header handling and support non-string values in RequestHeaders ([3a8c873](https://github.com/microsoft/kiota-ruby/commit/3a8c8732ca0ccc86a7e198f0a3ff94de0d942714))
+* **abstractions:** coerce header keys to strings in RequestHeaders add and try_add ([e8f50aa](https://github.com/microsoft/kiota-ruby/commit/e8f50aa8b80bab49e574e1adcbd294f6b83dbd47))
+* **abstractions:** coerce header keys to strings in RequestHeaders add_all and methods ([866065b](https://github.com/microsoft/kiota-ruby/commit/866065b019bea75e9fea6b7f46df56a4de156edb))
+* **abstractions:** support Symbol keys in RequestHeaders case-insensitive lookup ([2ffb40f](https://github.com/microsoft/kiota-ruby/commit/2ffb40f5eefa8bbed20cc9b37a76057804ea5f43))
+* address review feedback and resolve rubocop offenses ([1ffb49d](https://github.com/microsoft/kiota-ruby/commit/1ffb49da7daf5a9427bbeb79e6697698b40beee0))
+* **ci:** resolve Ruby matrix validation and RuboCop failures ([d59087d](https://github.com/microsoft/kiota-ruby/commit/d59087d3b2c1a0b03cfebfa349ed2811acd6baa0))
+* **http,abstractions:** improve request adapter lifecycle, error handling, and header parity ([3aef256](https://github.com/microsoft/kiota-ruby/commit/3aef25623b1f6799c32d4b61b1aa4d036d394942))
+* **http:** decode only query parameter names in ParametersNameDecodingHandler ([6f8e8fb](https://github.com/microsoft/kiota-ruby/commit/6f8e8fba1663b167e2a6cca55f63d2e571de0602))
+* **http:** defensive string coercion in FaradayRequestAdapter headers conversion ([89f00c9](https://github.com/microsoft/kiota-ruby/commit/89f00c917cd3b84aa571be41d507ad0bb03bfa7f))
+* **http:** fall back to ApiError on unparseable failed response in throw_if_failed_reponse ([45c4716](https://github.com/microsoft/kiota-ruby/commit/45c47161a3706bebf2cdefd8cdcad4bc99ecbfb9))
+* **http:** initialize request options context and respect custom response handlers ([e5161c7](https://github.com/microsoft/kiota-ruby/commit/e5161c7fcdb35db6816c276981bba4be7bd51cc8))
+* **http:** preserve trailing query separators in ParametersNameDecodingHandler ([5b91b39](https://github.com/microsoft/kiota-ruby/commit/5b91b3980d6a7a32f4fafb62118f8e8f128f4af2))
+* **http:** resolve LocalJumpError in convert_to_native_request_async ([9c62fc2](https://github.com/microsoft/kiota-ruby/commit/9c62fc20181f1fa3e37489b9f8c2f5da1e5c66de))
+* resolve Ruby CI matrix and lint failures ([41e8898](https://github.com/microsoft/kiota-ruby/commit/41e88984423888e4af0b17d14f13b72cb8f5fbdb))
+
 ## [0.25.2](https://github.com/microsoft/kiota-ruby/compare/v0.25.1...v0.25.2) (2026-10-29)
 
 
