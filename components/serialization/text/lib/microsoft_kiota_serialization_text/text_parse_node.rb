@@ -62,11 +62,7 @@ module MicrosoftKiotaSerializationText
     end
 
     def get_byte_array_value
-      text = scalar_text
-      return nil if text.nil?
-
-      clean = text.tr('-_', '+/').then { |t| t + ('=' * ((4 - (t.length % 4)) % 4)) }
-      clean.unpack1('m')
+      scalar_text&.unpack1('m')
     end
 
     def get_enum_value(type)
@@ -104,13 +100,10 @@ module MicrosoftKiotaSerializationText
       nil
     end
 
-    # typed values ignore surrounding whitespace and optional enclosing quotes, as .NET's TryParse does
+    # typed values ignore surrounding whitespace, as .NET's TryParse does
     def scalar_text
       text = get_string_value&.strip
-      return nil if text.nil? || text.empty?
-
-      text = text[1..-2].strip if (text.start_with?('"') && text.end_with?('"')) || (text.start_with?("'") && text.end_with?("'"))
-      text unless text.empty?
+      text unless text.nil? || text.empty?
     end
 
     # same resolution as JsonParseNode: the wire value first, then the member name

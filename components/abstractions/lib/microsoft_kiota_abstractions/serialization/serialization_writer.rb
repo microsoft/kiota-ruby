@@ -25,6 +25,10 @@ module MicrosoftKiotaAbstractions
       raise NotImplementedError
     end
 
+    def get_date_value(_key, _value)
+      raise NotImplementedError
+    end
+
     def write_guid_value(_key, _value)
       raise NotImplementedError
     end

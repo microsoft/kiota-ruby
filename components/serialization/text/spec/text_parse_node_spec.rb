@@ -149,24 +149,6 @@ RSpec.describe MicrosoftKiotaSerializationText::TextParseNode do
       expect(described_class.new("U2Ftd2Vs\nIGlzIHRoZSBiZXN0").get_byte_array_value).to eq('Samwel is the best')
     end
 
-    it 'reads scalar tokens enclosed in double or single quotes' do
-      expect(described_class.new('"true"').get_boolean_value).to be(true)
-      expect(described_class.new("'false'").get_boolean_value).to be(false)
-      expect(described_class.new('"42"').get_number_value).to eq(42)
-      expect(described_class.new("'3.14'").get_float_value).to eq(3.14)
-      expect(described_class.new('"2015-04-20"').get_date_value).to eq(Date.new(2015, 4, 20))
-      expect(described_class.new('"PT12H59M45S"').get_duration_value).to be_a(MicrosoftKiotaAbstractions::ISODuration)
-      expect(described_class.new('"f58411c7-ae78-4d3c-bb0d-3f24d948de41"').get_guid_value)
-        .to eq(UUIDTools::UUID.parse('f58411c7-ae78-4d3c-bb0d-3f24d948de41'))
-      expect(described_class.new('""').get_boolean_value).to be_nil
-      expect(described_class.new("''").get_number_value).to be_nil
-    end
-
-    it 'preserves raw enclosing quotes in get_string_value' do
-      expect(described_class.new('"quoted"').get_string_value).to eq('"quoted"')
-      expect(described_class.new("'quoted'").get_string_value).to eq("'quoted'")
-    end
-
     it 'returns nil for text that is not a guid, date, time, date time or duration, as .NET and the form gem do' do
       parse_node = described_class.new('not a value')
       readers = %i[get_guid_value get_date_value get_time_value get_date_time_value get_duration_value]
@@ -178,18 +160,5 @@ RSpec.describe MicrosoftKiotaSerializationText::TextParseNode do
       expect(described_class.new('12.5').get_number_value).to be_nil
       expect(described_class.new('twelve').get_float_value).to be_nil
     end
-  end
-end
-
-RSpec.describe MicrosoftKiotaSerializationText::TextParseNode, '#get_byte_array_value' do
-  it 'reads URL-safe and unpadded base64 byte arrays' do
-    expect(described_class.new('-_8=').get_byte_array_value).to eq("\xFB\xFF".b)
-    expect(described_class.new('-_8').get_byte_array_value).to eq("\xFB\xFF".b)
-    expect(described_class.new('-_').get_byte_array_value).to eq("\xFB".b)
-    expect(described_class.new('YWI').get_byte_array_value).to eq('ab')
-    expect(described_class.new('YQ').get_byte_array_value).to eq('a')
-    expect(described_class.new('U2Ftd2Vs').get_byte_array_value).to eq('Samwel')
-    expect(described_class.new('"U2Ftd2Vs"').get_byte_array_value).to eq('Samwel')
-    expect(described_class.new('"-_8"').get_byte_array_value).to eq("\xFB\xFF".b)
   end
 end
