@@ -44,6 +44,11 @@ RSpec.describe MicrosoftKiotaAbstractions::RequestInformation do
     expect(uri_for('/things{?kind,kinds}', {}, 'kind' => :read, 'kinds' => %i[read write]))
       .to eq('https://example.com/things?kind=read&kinds=read,write')
   end
+
+  it 'keeps the commas between function parameters in the path' do
+    expect(uri_for('/calls(from={from},to={to})', 'from' => '2026-10-01', 'to' => '2026-10-30'))
+      .to eq('https://example.com/calls(from=2026-10-01,to=2026-10-30)')
+  end
 end
 
 RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
