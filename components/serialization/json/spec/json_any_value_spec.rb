@@ -122,4 +122,11 @@ RSpec.describe 'serializing any value' do
       expect(JSON.parse(writer.get_serialized_content)).to eq([false, { 'a' => 1 }])
     end
   end
+
+  it 'returns nothing from a write, with or without a key' do
+    expect(writer.write_collection_of_primitive_values('values', [1])).to be_nil
+    expect(writer.write_collection_of_primitive_values(nil, [1])).to be_nil
+    expect(writer.write_any_value('a', { 'b' => 1 })).to be_nil
+    expect(writer.write_any_value(nil, 'root')).to be_nil
+  end
 end

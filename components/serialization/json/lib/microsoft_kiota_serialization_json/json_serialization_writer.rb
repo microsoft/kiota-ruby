@@ -23,7 +23,6 @@ module MicrosoftKiotaSerializationJson
     def set_root_value(value)
       @root_value = value
       @has_root_value = true
-      value
     end
 
     def root_value?
@@ -32,98 +31,84 @@ module MicrosoftKiotaSerializationJson
 
     def write_string_value(key, value)
       raise StandardError, 'no key or value included in write_string_value(key, value)' if key.nil? && value.nil?
-      return set_root_value(value) if key.nil?
       return if value.nil?
 
-      @writer[key] = value
+      write_value(key, value)
     end
 
     def write_boolean_value(key, value)
       raise StandardError, 'no key or value included in write_boolean_value(key, value)' if key.nil? && value.nil?
-      return set_root_value(value) if key.nil?
       return if value.nil?
 
-      @writer[key] = value
+      write_value(key, value)
     end
 
     def write_number_value(key, value)
       raise StandardError, 'no key or value included in write_number_value(key, value)' if key.nil? && value.nil?
-      return set_root_value(value) if key.nil?
       return if value.nil?
 
-      @writer[key] = value
+      write_value(key, value)
     end
 
     def write_float_value(key, value)
       raise StandardError, 'no key or value included in write_float_value(key, value)' if key.nil? && value.nil?
-      return set_root_value(value) if key.nil?
       return if value.nil?
 
-      @writer[key] = value
+      write_value(key, value)
     end
 
     def write_guid_value(key, value)
       raise StandardError, 'no key or value included in write_guid_value(key, value)' if !key && !value
-      return set_root_value(value.to_s) unless key
       return if value.nil?
 
-      @writer[key] = value.to_s
+      write_value(key, value.to_s)
     end
 
     def write_date_value(key, value)
       raise StandardError, 'no key or value included in write_date_value(key, value)' if !key && !value
-      return set_root_value(value.strftime('%Y-%m-%d')) unless key
       return if value.nil?
 
-      @writer[key] = value.strftime('%Y-%m-%d')
+      write_value(key, value.strftime('%Y-%m-%d'))
     end
 
     def write_time_value(key, value)
       raise StandardError, 'no key or value included in write_time_value(key, value)' if !key && !value
-      return set_root_value(value.strftime('%H:%M:%S%Z')) unless key
       return if value.nil?
 
-      @writer[key] = value.strftime('%H:%M:%S%Z')
+      write_value(key, value.strftime('%H:%M:%S%Z'))
     end
 
     def write_date_time_value(key, value)
       raise StandardError, 'no key or value included in write_date_time_value(key, value)' if !key && !value
-      return set_root_value(value.strftime('%Y-%m-%dT%H:%M:%S%Z')) unless key
       return if value.nil?
 
-      @writer[key] = value.strftime('%Y-%m-%dT%H:%M:%S%Z')
+      write_value(key, value.strftime('%Y-%m-%dT%H:%M:%S%Z'))
     end
 
     def write_duration_value(key, value)
       raise StandardError, 'no key or value included in write_duration_value(key, value)' if !key && !value
-      return set_root_value(value.string) unless key
       return if value.nil?
 
-      @writer[key] = value.string
+      write_value(key, value.string)
     end
 
     def write_byte_array_value(key, value)
       raise StandardError, 'no key or value included in write_byte_array_value(key, value)' if key.nil? && value.nil?
-      return set_root_value([value].pack('m0')) if key.nil?
       return if value.nil?
 
-      @writer[key] = [value].pack('m0')
+      write_value(key, [value].pack('m0'))
     end
 
     def write_collection_of_primitive_values(key, values)
       return unless values
 
-      serialized = values.map { |v| serialized_scalar(v) }
-      return set_root_value(serialized) unless key
-
-      @writer[key] = serialized
+      write_value(key, values.map { |v| serialized_scalar(v) })
     end
 
     def write_collection_of_object_values(key, values)
       return unless values
-      return set_root_value(values.map { |v| object_value_hash(v) }) unless key
 
-      @writer[key] = values.map { |v| object_value_hash(v) }
+      write_value(key, values.map { |v| object_value_hash(v) })
     end
 
     def write_object_value(key, value, *additional_values_to_merge)
@@ -138,18 +123,13 @@ module MicrosoftKiotaSerializationJson
     end
 
     def write_null_value(key)
-      return set_root_value(nil) if key.nil?
-
-      @writer[key] = nil
+      write_value(key, nil)
     end
 
     def write_collection_of_enum_values(key, values)
       return unless values
 
-      serialized = values.compact.map(&:to_s)
-      return set_root_value(serialized) unless key
-
-      @writer[key] = serialized
+      write_value(key, values.compact.map(&:to_s))
     end
 
     def write_enum_value(key, values)
@@ -172,6 +152,16 @@ module MicrosoftKiotaSerializationJson
     end
 
     private
+
+    # a nil key writes the document root, which a composed type wrapper of a scalar uses
+    def write_value(key, value)
+      if key.nil?
+        set_root_value(value)
+      else
+        @writer[key] = value
+      end
+      nil
+    end
 
     def object_value_hash(value, *additional_values_to_merge)
       temp = child_writer
@@ -199,17 +189,16 @@ module MicrosoftKiotaSerializationJson
     end
 
     def write_hash_value(key, value)
-      serialized = value.transform_values { |v| serialized_scalar(v) }
-      return set_root_value(serialized) unless key
-
-      @writer[key] = serialized
+      write_value(key, value.transform_values { |v| serialized_scalar(v) })
     end
 
     # a composed type wrapper writes its scalar as the root value, which a nested object hash would drop
     def write_parsable_value(key, value)
-      return write_object_value(nil, value) unless key
-
-      @writer[key] = serialized_scalar(value)
+      if key
+        write_value(key, serialized_scalar(value))
+      else
+        write_object_value(nil, value)
+      end
     end
 
     public
