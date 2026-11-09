@@ -160,7 +160,6 @@ RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
     expect(empty_enum_validator.url_host_valid?('https://example.com')).to be(true)
     expect(empty_enum_validator.url_host_valid?('https://unlisted.example')).to be(true)
 
-    require 'set'
     empty_set_validator = described_class.new(Set.new)
     expect(empty_set_validator.url_host_valid?('https://example.com')).to be(true)
     expect(empty_set_validator.url_host_valid?('https://unlisted.example')).to be(true)
