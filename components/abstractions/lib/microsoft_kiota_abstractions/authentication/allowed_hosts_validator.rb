@@ -4,16 +4,25 @@ require 'uri'
 
 module MicrosoftKiotaAbstractions
   # Maintains a list of valid hosts and allows authentication providers to check whether
-  # a host is valid before authenticating a request
+  # a host is valid before authenticating a request.
+  #
+  # @note Passing +nil+ or an empty collection explicitly enables allow-all semantics for HTTPS hosts,
+  #       disabling host restriction checks.
   class AllowedHostsValidator
     LOCALHOST_STRINGS = ['localhost', '::1', '[::1]', '127.0.0.1'].freeze
 
-    # creates a new AllocatedHostsValidator with provided values
+    # creates a new AllowedHostsValidator with provided values
+    #
+    # @param allowed_hosts [Enumerable, nil] collection of valid hosts. If nil or empty, allow-all semantics are enabled.
     def initialize(allowed_hosts)
       self.allowed_hosts = allowed_hosts
     end
 
     # sets the list of valid hosts with provided value (val)
+    #
+    # @note Passing +nil+ or an empty collection explicitly enables allow-all semantics for HTTPS hosts,
+    #       disabling host restriction checks.
+    # @param val [Enumerable, nil] collection of valid hosts.
     def allowed_hosts=(val)
       if val.nil?
         @allowed_hosts = {}
@@ -23,13 +32,14 @@ module MicrosoftKiotaAbstractions
       raise ArgumentError, 'allowed_hosts cannot be a string' if val.is_a?(String)
       raise ArgumentError, 'allowed_hosts must be an Enumerable collection or nil' unless val.respond_to?(:each)
 
-      if val.respond_to?(:empty?) && val.empty?
+      elements = val.to_a
+      if elements.empty?
         @allowed_hosts = {}
         return
       end
 
       hosts = {}
-      val.each do |host|
+      elements.each do |host|
         next if host.nil?
 
         cleaned = host.to_s.strip

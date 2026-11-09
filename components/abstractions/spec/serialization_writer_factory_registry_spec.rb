@@ -7,7 +7,16 @@ RSpec.describe MicrosoftKiotaAbstractions::SerializationWriterFactoryRegistry do
   let(:mock_factory) { SerializationWriterFactoryMock.new }
 
   before do
+    @previous_factory = described_class.default_instance.content_type_associated_factories['application/json']
     described_class.default_instance.content_type_associated_factories['application/json'] = mock_factory
+  end
+
+  after do
+    if @previous_factory
+      described_class.default_instance.content_type_associated_factories['application/json'] = @previous_factory
+    else
+      described_class.default_instance.content_type_associated_factories.delete('application/json')
+    end
   end
 
   it 'gets the serialization writer for standard, parameterized, and vendor-specific content types' do
@@ -17,7 +26,8 @@ RSpec.describe MicrosoftKiotaAbstractions::SerializationWriterFactoryRegistry do
       'application/json ; charset=utf-8',
       'application/vnd.github.mercy-preview+json',
       'application/vnd.github.mercy-preview+json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8',
-      "application/#{Array.new(10, 'vendor').join('.')}+json"
+      "application/#{Array.new(10, 'vendor').join('.')}+json",
+      "application/#{Array.new(1000, 'vendor').join('.')}+json"
     ]
 
     values.each do |value|
@@ -29,7 +39,7 @@ RSpec.describe MicrosoftKiotaAbstractions::SerializationWriterFactoryRegistry do
     [nil, '', '   '].each do |bad_type|
       expect do
         described_class.default_instance.get_serialization_writer(bad_type)
-      end.to raise_error(StandardError, 'content type cannot be undefined or empty')
+      end.to raise_error(ArgumentError, 'content type cannot be undefined or empty')
     end
   end
 

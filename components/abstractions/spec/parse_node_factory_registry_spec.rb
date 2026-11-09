@@ -8,7 +8,16 @@ RSpec.describe MicrosoftKiotaAbstractions::ParseNodeFactoryRegistry do
   let(:serialized_value) { '[1]' }
 
   before do
+    @previous_factory = described_class.default_instance.content_type_associated_factories['application/json']
     described_class.default_instance.content_type_associated_factories['application/json'] = mock_factory
+  end
+
+  after do
+    if @previous_factory
+      described_class.default_instance.content_type_associated_factories['application/json'] = @previous_factory
+    else
+      described_class.default_instance.content_type_associated_factories.delete('application/json')
+    end
   end
 
   it 'gets the parse node for standard, parameterized, and vendor-specific content types' do
@@ -18,7 +27,8 @@ RSpec.describe MicrosoftKiotaAbstractions::ParseNodeFactoryRegistry do
       'application/json ; charset=utf-8',
       'application/vnd.github.mercy-preview+json',
       'application/vnd.github.mercy-preview+json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8',
-      "application/#{Array.new(10, 'vendor').join('.')}+json"
+      "application/#{Array.new(10, 'vendor').join('.')}+json",
+      "application/#{Array.new(1000, 'vendor').join('.')}+json"
     ]
 
     values.each do |value|
@@ -30,7 +40,7 @@ RSpec.describe MicrosoftKiotaAbstractions::ParseNodeFactoryRegistry do
     [nil, '', '   '].each do |bad_type|
       expect do
         described_class.default_instance.get_parse_node(bad_type, serialized_value)
-      end.to raise_error(StandardError, 'content type cannot be undefined or empty')
+      end.to raise_error(ArgumentError, 'content type cannot be undefined or empty')
     end
   end
 
@@ -38,7 +48,7 @@ RSpec.describe MicrosoftKiotaAbstractions::ParseNodeFactoryRegistry do
     [nil, ''].each do |bad_content|
       expect do
         described_class.default_instance.get_parse_node('application/json', bad_content)
-      end.to raise_error(StandardError, 'content cannot be undefined or empty')
+      end.to raise_error(ArgumentError, 'content cannot be undefined or empty')
     end
   end
 

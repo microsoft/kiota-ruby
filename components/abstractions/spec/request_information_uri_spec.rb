@@ -144,7 +144,7 @@ RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
     expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
   end
 
-  it 'preserves intentional allow-all semantics when updating to nil or empty array' do
+  it 'preserves intentional allow-all semantics when updating to nil or empty collection' do
     nil_validator = described_class.new(['example.com'])
     nil_validator.allowed_hosts = nil
     expect(nil_validator.url_host_valid?('https://example.com')).to be(true)
@@ -154,5 +154,15 @@ RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
     empty_array_validator.allowed_hosts = []
     expect(empty_array_validator.url_host_valid?('https://example.com')).to be(true)
     expect(empty_array_validator.url_host_valid?('https://unlisted.example')).to be(true)
+
+    empty_enum_validator = described_class.new(['example.com'])
+    empty_enum_validator.allowed_hosts = [].each
+    expect(empty_enum_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(empty_enum_validator.url_host_valid?('https://unlisted.example')).to be(true)
+
+    require 'set'
+    empty_set_validator = described_class.new(Set.new)
+    expect(empty_set_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(empty_set_validator.url_host_valid?('https://unlisted.example')).to be(true)
   end
 end

@@ -21,8 +21,8 @@ module MicrosoftKiotaAbstractions
     end
 
     def get_parse_node(content_type, content)
-      raise StandardError, 'content type cannot be undefined or empty' if content_type.nil? || content_type.strip.empty?
-      raise StandardError, 'content cannot be undefined or empty' if content.nil? || (content.respond_to?(:empty?) && content.empty?)
+      raise ArgumentError, 'content type cannot be undefined or empty' if content_type.nil? || content_type.strip.empty?
+      raise ArgumentError, 'content cannot be undefined or empty' if content.nil? || (content.respond_to?(:empty?) && content.empty?)
 
       vendor_specific_content_type = content_type.split(';').first.strip
       factory = content_type_associated_factories[vendor_specific_content_type]
