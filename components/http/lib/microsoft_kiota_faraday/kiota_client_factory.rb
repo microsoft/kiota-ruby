@@ -6,10 +6,13 @@ require_relative 'middleware/redirect_handler'
 require_relative 'middleware/parameters_name_decoding_handler'
 require_relative 'middleware/user_agent_handler'
 require_relative 'middleware/headers_inspection_handler'
+require_relative 'middleware/body_inspection_handler'
 module MicrosoftKiotaFaraday
   class KiotaClientFactory
     def self.get_default_middleware
       [
+        # Inspect the original request before redirects buffer or rewrite it.
+        MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler,
         MicrosoftKiotaFaraday::Middleware::RedirectHandler,
         MicrosoftKiotaFaraday::Middleware::ParametersNameDecodingHandler,
         MicrosoftKiotaFaraday::Middleware::UserAgentHandler,

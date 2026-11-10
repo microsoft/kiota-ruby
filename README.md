@@ -53,6 +53,31 @@ Use a new option for each concurrent request. To inspect outgoing headers, set
 custom Faraday middleware stack, include
 `MicrosoftKiotaFaraday::Middleware::HeadersInspectionHandler`.
 
+## Inspect request or response bodies
+
+The default middleware can copy the body for a single request. To inspect the
+response body while still letting Kiota deserialize it, add a
+`BodyInspectionOption` to the request configuration:
+
+```ruby
+inspection = MicrosoftKiotaFaraday::Middleware::BodyInspectionOption.new(
+  inspect_response_body: true
+)
+begin
+  items = client.items.get(->(config) { config.options << inspection }).resume
+  raw_body = inspection.response_body&.read
+ensure
+  inspection.response_body&.close
+end
+```
+
+Set `inspect_request_body: true` to inspect the outgoing body instead or as well.
+Use a new option for each request and close each copy when finished. Copies
+are held in memory, so avoid inspecting large payloads. Body inspection skips
+non-seekable streams. With the default middleware stack, it inspects the
+original request and the final response after redirects. For a custom Faraday
+middleware stack, include `MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler`.
+
 ## Follow redirects
 
 The default HTTP client follows up to five redirects (301, 302, 303, 307, and
