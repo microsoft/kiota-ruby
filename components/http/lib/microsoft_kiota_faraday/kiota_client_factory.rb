@@ -2,6 +2,7 @@
 
 require 'net/https'
 require 'faraday'
+require_relative 'middleware/redirect_handler'
 require_relative 'middleware/parameters_name_decoding_handler'
 require_relative 'middleware/user_agent_handler'
 require_relative 'middleware/headers_inspection_handler'
@@ -9,6 +10,7 @@ module MicrosoftKiotaFaraday
   class KiotaClientFactory
     def self.get_default_middleware
       [
+        MicrosoftKiotaFaraday::Middleware::RedirectHandler,
         MicrosoftKiotaFaraday::Middleware::ParametersNameDecodingHandler,
         MicrosoftKiotaFaraday::Middleware::UserAgentHandler,
         MicrosoftKiotaFaraday::Middleware::HeadersInspectionHandler

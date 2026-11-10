@@ -53,6 +53,23 @@ Use a new option for each concurrent request. To inspect outgoing headers, set
 custom Faraday middleware stack, include
 `MicrosoftKiotaFaraday::Middleware::HeadersInspectionHandler`.
 
+## Follow redirects
+
+The default HTTP client follows up to five redirects (301, 302, 303, 307, and
+308), including relative locations. It does not follow HTTPS-to-HTTP redirects.
+If the scheme, host, or port changes, it removes authorization and cookie
+headers. Requests configured with a TLS client certificate only follow
+same-origin redirects. Responses streamed through a Faraday callback and
+parallel requests are passed through without following redirects.
+
+Request bodies are buffered when redirects are enabled so that requests can be
+replayed. To keep streaming an upload without buffering, set the limit to zero:
+
+```ruby
+redirect = MicrosoftKiotaFaraday::Middleware::RedirectHandlerOption.new(max_redirects: 0)
+client.items.post(item, ->(config) { config.options << redirect }).resume
+```
+
 ## Development
 
 Install Ruby 3.3 or newer, then run:
