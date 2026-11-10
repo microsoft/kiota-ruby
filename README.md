@@ -73,9 +73,27 @@ end
 
 Set `inspect_request_body: true` to inspect the outgoing body instead or as well.
 Use a new option for each request and close each copy when finished. Copies
-are held in memory, so avoid inspecting large payloads. Non-seekable streams
-are sent unchanged and aren't copied. For a custom Faraday middleware stack,
-include `MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler`.
+are held in memory, so avoid inspecting large payloads. Body inspection skips
+non-seekable streams. With the default middleware stack, it inspects the
+original request and the final response after redirects. For a custom Faraday
+middleware stack, include `MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler`.
+
+## Follow redirects
+
+The default HTTP client follows up to five redirects (301, 302, 303, 307, and
+308), including relative locations. It does not follow HTTPS-to-HTTP redirects.
+If the scheme, host, or port changes, it removes authorization and cookie
+headers. Requests configured with a TLS client certificate only follow
+same-origin redirects. Responses streamed through a Faraday callback and
+parallel requests are passed through without following redirects.
+
+Request bodies are buffered when redirects are enabled so that requests can be
+replayed. To keep streaming an upload without buffering, set the limit to zero:
+
+```ruby
+redirect = MicrosoftKiotaFaraday::Middleware::RedirectHandlerOption.new(max_redirects: 0)
+client.items.post(item, ->(config) { config.options << redirect }).resume
+```
 
 ## Development
 

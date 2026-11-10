@@ -11,9 +11,15 @@ RSpec.describe 'Body inspection' do
     end
   end
 
-  def post_body(body, option)
+  def post_body(body, option, follow_redirects: true)
+    context = { option.get_key => option }
+    unless follow_redirects
+      redirect = MicrosoftKiotaFaraday::Middleware::RedirectHandlerOption.new(max_redirects: 0)
+      context[redirect.get_key] = redirect
+    end
+
     client.post('/items', body) do |request|
-      request.options.context = { option.get_key => option }
+      request.options.context = context
     end
   end
 
@@ -28,7 +34,7 @@ RSpec.describe 'Body inspection' do
       [200, {}, 'reply']
     end
 
-    post_body(body, option)
+    post_body(body, option, follow_redirects: false)
 
     expect(option.request_body.read).to eq('payload')
     expect(option.response_body).to be_nil
@@ -48,6 +54,21 @@ RSpec.describe 'Body inspection' do
     expect(response.body).to eq('error details')
   end
 
+  it 'copies the original request and the final response across a redirect' do
+    option = MicrosoftKiotaFaraday::Middleware::BodyInspectionOption.new(
+      inspect_request_body: true, inspect_response_body: true
+    )
+    stubs.post('/items') { [303, { 'Location' => '/result' }, 'intermediate'] }
+    stubs.get('/result') do |env|
+      expect(env.body).to be_nil
+      [200, {}, 'final']
+    end
+
+    expect(post_body('payload', option).body).to eq('final')
+    expect(option.request_body.read).to eq('payload')
+    expect(option.response_body.read).to eq('final')
+  end
+
   it 'leaves a non-seekable request stream for the transport to consume' do
     option = MicrosoftKiotaFaraday::Middleware::BodyInspectionOption.new(inspect_request_body: true)
     stubs.post('/items') do |env|
@@ -58,7 +79,7 @@ RSpec.describe 'Body inspection' do
     IO.pipe do |reader, writer|
       writer.write('payload')
       writer.close
-      post_body(reader, option)
+      post_body(reader, option, follow_redirects: false)
     end
 
     expect(option.request_body).to be_nil
@@ -74,7 +95,7 @@ RSpec.describe 'Body inspection' do
       [200, {}, 'reply']
     end
 
-    post_body(body, option)
+    post_body(body, option, follow_redirects: false)
 
     expect(option.request_body).to be_nil
   end
