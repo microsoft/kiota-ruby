@@ -64,6 +64,21 @@ RSpec.describe 'Body inspection' do
     expect(option.request_body).to be_nil
   end
 
+  it 'preserves the request body when a position probe raises EPIPE' do
+    option = MicrosoftKiotaFaraday::Middleware::BodyInspectionOption.new(inspect_request_body: true)
+    body = StringIO.new('payload')
+    allow(body).to receive(:pos).and_raise(Errno::EPIPE)
+    stubs.post('/items') do |env|
+      expect(env.body).to equal(body)
+      expect(env.body.read).to eq('payload')
+      [200, {}, 'reply']
+    end
+
+    post_body(body, option)
+
+    expect(option.request_body).to be_nil
+  end
+
   it 'does not copy either body by default' do
     option = MicrosoftKiotaFaraday::Middleware::BodyInspectionOption.new
     stubs.post('/items') { [200, {}, 'reply'] }

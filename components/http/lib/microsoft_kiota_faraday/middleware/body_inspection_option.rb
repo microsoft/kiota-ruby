@@ -51,7 +51,7 @@ module MicrosoftKiotaFaraday
         position = body.pos
         body.pos = position
         position
-      rescue Errno::ESPIPE, Errno::EINVAL, IOError
+      rescue Errno::ESPIPE, Errno::EPIPE, Errno::EINVAL, IOError
         nil
       end
     end
