@@ -21,14 +21,14 @@ module MicrosoftKiotaAbstractions
     end
 
     def get_serialization_writer(content_type)
-      raise StandardError, 'content type cannot be undefined or empty' unless content_type
+      raise ArgumentError, 'content type cannot be undefined or empty' if content_type.nil? || content_type.strip.empty?
 
-      vendor_specific_content_type = content_type.split(';').first
-      factory = @content_type_associated_factories[vendor_specific_content_type]
+      vendor_specific_content_type = content_type.split(';').first.strip
+      factory = content_type_associated_factories[vendor_specific_content_type]
       return factory.get_serialization_writer(vendor_specific_content_type) if factory
 
       clean_content_type = get_clean_content_type(vendor_specific_content_type)
-      factory = @content_type_associated_factories[clean_content_type]
+      factory = content_type_associated_factories[clean_content_type]
       return factory.get_serialization_writer(clean_content_type) if factory
 
       raise StandardError, "Content type #{content_type} does not have a factory to be serialized"

@@ -92,4 +92,81 @@ RSpec.describe MicrosoftKiotaAbstractions::AllowedHostsValidator do
     expect(unbracketed_validator.url_host_valid?('http://example.com')).to be(false)
     expect(unbracketed_validator.url_host_valid?('https://example.com')).to be(false)
   end
+
+  it 'accepts nil allowed_hosts and treats it as an empty validator allowing all https hosts' do
+    nil_validator = described_class.new(nil)
+    expect(nil_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(nil_validator.url_host_valid?('https://graph.microsoft.com')).to be(true)
+    expect(nil_validator.url_host_valid?('http://example.com')).to be(false)
+  end
+
+  it 'trims surrounding whitespace from host entries' do
+    padded_validator = described_class.new(['  example.com  ', "  graph.microsoft.com\n"])
+    expect(padded_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(padded_validator.url_host_valid?('https://graph.microsoft.com')).to be(true)
+  end
+
+  it 'returns false for nil, empty, or whitespace-only urls' do
+    validator = described_class.new(['example.com'])
+    [nil, '', '   '].each do |bad_url|
+      expect(validator.url_host_valid?(bad_url)).to be(false)
+    end
+  end
+
+  it 'rejects a non-empty allowlist containing only blank or nil entries' do
+    ['', '   ', "\t\n"].each do |blank|
+      expect { described_class.new([blank]) }.to raise_error(ArgumentError, /allowed_hosts/)
+    end
+    expect { described_class.new([nil]) }.to raise_error(ArgumentError, /allowed_hosts/)
+    expect { described_class.new(['  ', nil, '']) }.to raise_error(ArgumentError, /allowed_hosts/)
+  end
+
+  it 'preserves existing allowlist when an update containing only blank hosts is rejected' do
+    validator = described_class.new(['example.com'])
+    expect { validator.allowed_hosts = ['   '] }.to raise_error(ArgumentError)
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
+  end
+
+  it 'allows non-empty allowlist with some blank entries as long as at least one valid host remains' do
+    validator = described_class.new(['example.com', '   ', nil])
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
+  end
+
+  it 'rejects assigning an empty string or non-enumerable value and preserves existing allowlist' do
+    validator = described_class.new(['example.com'])
+    expect { validator.allowed_hosts = '' }.to raise_error(ArgumentError)
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
+
+    expect { validator.allowed_hosts = 'example.com' }.to raise_error(ArgumentError)
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
+
+    expect { validator.allowed_hosts = 123 }.to raise_error(ArgumentError)
+    expect(validator.url_host_valid?('https://example.com')).to be(true)
+    expect(validator.url_host_valid?('https://unlisted.example')).to be(false)
+  end
+
+  it 'preserves intentional allow-all semantics when updating to nil or empty collection' do
+    nil_validator = described_class.new(['example.com'])
+    nil_validator.allowed_hosts = nil
+    expect(nil_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(nil_validator.url_host_valid?('https://unlisted.example')).to be(true)
+
+    empty_array_validator = described_class.new(['example.com'])
+    empty_array_validator.allowed_hosts = []
+    expect(empty_array_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(empty_array_validator.url_host_valid?('https://unlisted.example')).to be(true)
+
+    empty_enum_validator = described_class.new(['example.com'])
+    empty_enum_validator.allowed_hosts = [].each
+    expect(empty_enum_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(empty_enum_validator.url_host_valid?('https://unlisted.example')).to be(true)
+
+    empty_set_validator = described_class.new(Set.new)
+    expect(empty_set_validator.url_host_valid?('https://example.com')).to be(true)
+    expect(empty_set_validator.url_host_valid?('https://unlisted.example')).to be(true)
+  end
 end

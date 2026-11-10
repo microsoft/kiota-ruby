@@ -4,32 +4,63 @@ require 'uri'
 
 module MicrosoftKiotaAbstractions
   # Maintains a list of valid hosts and allows authentication providers to check whether
-  # a host is valid before authenticating a request
+  # a host is valid before authenticating a request.
+  #
+  # @note Passing +nil+ or an empty collection explicitly enables allow-all semantics for HTTPS hosts,
+  #       disabling host restriction checks.
   class AllowedHostsValidator
     LOCALHOST_STRINGS = ['localhost', '::1', '[::1]', '127.0.0.1'].freeze
 
-    # creates a new AllocatedHostsValidator with provided values
+    # creates a new AllowedHostsValidator with provided values
+    #
+    # @param allowed_hosts [Enumerable, nil] collection of valid hosts. If nil or empty, allow-all semantics are enabled.
     def initialize(allowed_hosts)
       self.allowed_hosts = allowed_hosts
     end
 
     # sets the list of valid hosts with provided value (val)
+    #
+    # @note Passing +nil+ or an empty collection explicitly enables allow-all semantics for HTTPS hosts,
+    #       disabling host restriction checks.
+    # @param val [Enumerable, nil] collection of valid hosts.
     def allowed_hosts=(val)
-      hosts = {}
-      val.each do |host|
-        raise ArgumentError, "host should not contain http or https prefix: #{host}" if host.match?(%r{\Ahttps?://}i)
-
-        hosts[host.downcase] = true
+      if val.nil?
+        @allowed_hosts = {}
+        return
       end
+
+      raise ArgumentError, 'allowed_hosts cannot be a string' if val.is_a?(String)
+      raise ArgumentError, 'allowed_hosts must be an Enumerable collection or nil' unless val.respond_to?(:each)
+
+      elements = val.to_a
+      if elements.empty?
+        @allowed_hosts = {}
+        return
+      end
+
+      hosts = {}
+      elements.each do |host|
+        next if host.nil?
+
+        cleaned = host.to_s.strip
+        next if cleaned.empty?
+
+        raise ArgumentError, "host should not contain http or https prefix: #{cleaned}" if cleaned.match?(%r{\Ahttps?://}i)
+
+        hosts[cleaned.downcase] = true
+      end
+
+      raise ArgumentError, 'allowed_hosts must contain at least one valid host when provided as a non-empty list' if hosts.empty?
+
       @allowed_hosts = hosts
     end
 
     # checks whether the provided host is valid
     def url_host_valid?(url)
-      return false if url.nil?
+      return false if url.nil? || (url.respond_to?(:empty?) && url.empty?)
 
       begin
-        parsed_url = URI(url)
+        parsed_url = URI(url.respond_to?(:strip) ? url.strip : url)
       rescue URI::InvalidURIError, ArgumentError
         return false
       end
