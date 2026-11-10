@@ -107,7 +107,9 @@ module MicrosoftKiotaFaraday
         set_base_url_for_request_information(request_info)
         @authentication_provider.authenticate_request(request_info).resume
         request = get_request_from_request_info(request_info)
-        response = @client.run_request(request.http_method, request.path, request.body, request.headers)
+        response = @client.run_request(request.http_method, request.path, request.body, request.headers) do |native_request|
+          native_request.options.context = request.options.context
+        end
 
         response_handler = get_response_handler(request_info)
         if response_handler
@@ -184,7 +186,7 @@ module MicrosoftKiotaFaraday
       request_options = request_info.get_request_options
       if !request_options.nil? && !request_options.empty?
         request.options = Faraday::RequestOptions.new if request.options.nil?
-        request.options.context ||= {}
+        request.options.context = (request.options.context || {}).dup
         request_options.each do |value|
           request.options.context[value.get_key] = value
         end

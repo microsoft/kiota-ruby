@@ -34,6 +34,25 @@ gem 'microsoft_kiota_faraday'
 gem 'microsoft_kiota_authentication_oauth'
 ```
 
+## Inspect response headers
+
+To read response headers while letting Kiota deserialize the body, add a
+`HeadersInspectionOption` to the request configuration. For example, with a
+generated client that has an `items` request builder:
+
+```ruby
+inspection = MicrosoftKiotaFaraday::Middleware::HeadersInspectionOption.new(
+  inspect_response_headers: true
+)
+items = client.items.get(->(config) { config.options << inspection }).resume
+content_range = inspection.response_headers['Content-Range']
+```
+
+Use a new option for each concurrent request. To inspect outgoing headers, set
+`inspect_request_headers: true` and read `inspection.request_headers`. For a
+custom Faraday middleware stack, include
+`MicrosoftKiotaFaraday::Middleware::HeadersInspectionHandler`.
+
 ## Development
 
 Install Ruby 3.3 or newer, then run:
