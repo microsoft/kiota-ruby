@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'stringio'
 require 'microsoft_kiota_abstractions'
 require_relative 'request_option_mock'
 require_relative 'query_parameters_mock'
@@ -138,5 +139,57 @@ RSpec.describe MicrosoftKiotaAbstractions do
 
     request_info.url_template = ''
     expect { request_info.uri }.to raise_error(StandardError, 'url_template cannot be nil or empty')
+  end
+
+  context 'when setting stream content' do
+    it 'sets stream content and defaults content-type with single argument' do
+      request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+      stream = StringIO.new('sample binary stream')
+
+      request_info.set_stream_content(stream)
+
+      expect(request_info.content).to eq(stream)
+      expect(request_info.headers.get('Content-Type')).to eq(['application/octet-stream'])
+    end
+
+    it 'sets raw string content and defaults content-type with single argument' do
+      request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+
+      request_info.set_stream_content('binary_bytes')
+
+      expect(request_info.content).to eq('binary_bytes')
+      expect(request_info.headers.get('Content-Type')).to eq(['application/octet-stream'])
+    end
+
+    it 'sets default $stdin and content-type when called with zero arguments' do
+      request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+
+      request_info.set_stream_content
+
+      expect(request_info.content).to eq($stdin)
+      expect(request_info.headers.get('Content-Type')).to eq(['application/octet-stream'])
+    end
+
+    it 'preserves custom content type when provided' do
+      request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+      stream = StringIO.new('pdf data')
+
+      request_info.set_stream_content(stream, 'application/pdf')
+
+      expect(request_info.content).to eq(stream)
+      expect(request_info.headers.get('Content-Type')).to eq(['application/pdf'])
+    end
+
+    it 'falls back to binary content type when content type is nil or empty' do
+      request_info = MicrosoftKiotaAbstractions::RequestInformation.new
+      stream = StringIO.new('data')
+
+      request_info.set_stream_content(stream, nil)
+      expect(request_info.headers.get('Content-Type')).to eq(['application/octet-stream'])
+
+      request_info2 = MicrosoftKiotaAbstractions::RequestInformation.new
+      request_info2.set_stream_content(stream, '')
+      expect(request_info2.headers.get('Content-Type')).to eq(['application/octet-stream'])
+    end
   end
 end
