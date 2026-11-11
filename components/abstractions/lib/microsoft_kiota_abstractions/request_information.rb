@@ -86,9 +86,9 @@ module MicrosoftKiotaAbstractions
       @http_method = HttpMethod::HTTP_METHOD[method]
     end
 
-    def set_stream_content(value = $stdin, content_type)
+    def set_stream_content(value = $stdin, content_type = @@binary_content_type)
       @content = value
-      content_type = @@binary_content_type if content_type.nil? || content_type.empty?
+      content_type = @@binary_content_type if content_type.nil? || (content_type.respond_to?(:empty?) && content_type.empty?)
       headers.try_add(@@content_type_header, content_type)
     end
 
