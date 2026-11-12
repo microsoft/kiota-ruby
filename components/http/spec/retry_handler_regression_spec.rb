@@ -52,9 +52,9 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
   end
 
   [Errno::ESPIPE, Errno::EPIPE, IOError].each do |error_class|
-    it "does not replay a request when rewind raises #{error_class}" do
-      body = double('request stream', read: 'data')
-      allow(body).to receive(:rewind).and_raise(error_class)
+    it "does not replay a request when seek raises #{error_class}" do
+      body = double('request stream', read: 'data', pos: 0)
+      allow(body).to receive(:seek).and_raise(error_class)
       failed = Faraday::Response.new(status: 503, response_headers: {}, body: 'unavailable')
       allow(app).to receive(:call).and_return(failed)
 
@@ -133,5 +133,46 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
 
     expect(handler.call(env)).to eq(success)
     expect(app).to have_received(:call).once
+  end
+  it 'replays only the original remaining upload bytes on every retry' do
+    body = StringIO.new('rawbytes')
+    body.pos = 3
+    uploads = []
+    allow(app).to receive(:call) do |env|
+      uploads << [env[:body].read, env[:request_headers]['Content-Length']]
+      uploads.size < 3 ? Faraday::Response.new(status: 503, response_headers: {}, body: '') : success
+    end
+
+    expect(handler.call(body: body, request_headers: { 'Content-Length' => '5' })).to eq(success)
+    expect(uploads).to eq([%w[bytes 5], %w[bytes 5], %w[bytes 5]])
+  end
+
+  it 'raises exhaustion before budgeting a hypothetical extra retry' do
+    responses = 2.times.map { Faraday::Response.new(status: 503, response_headers: {}, body: 'busy') }
+    allow(app).to receive(:call).and_return(*responses)
+    limited = described_class.new(app, option_class.new(max_retries: 1, delay: 3, retries_time_limit: 3))
+    allow(limited).to receive(:sleep)
+
+    expect { limited.call(body: nil, request_headers: {}) }.to raise_error(
+      MicrosoftKiotaFaraday::Middleware::RetryExhaustedError
+    ) do |error|
+      expect(error.responses).to eq(responses)
+    end
+    expect(app).to have_received(:call).twice
+    expect(limited).to have_received(:sleep).once.with(3)
+  end
+
+  [Errno::ESPIPE, Errno::EPIPE, IOError].each do |error_class|
+    it "leaves a stream with an unreadable position alone on #{error_class}" do
+      body = double('request stream', read: 'data', seek: nil)
+      allow(body).to receive(:pos).and_raise(error_class)
+      failed = Faraday::Response.new(status: 503, response_headers: {}, body: 'busy')
+      allow(app).to receive(:call).and_return(failed)
+
+      expect(handler.call(body: body, request_headers: {})).to eq(failed)
+      expect(app).to have_received(:call).once
+      expect(body).not_to have_received(:seek)
+      expect(handler).not_to have_received(:sleep)
+    end
   end
 end

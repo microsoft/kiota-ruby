@@ -33,11 +33,12 @@ module MicrosoftKiotaFaraday
 
         request_option = option_for(request_env)
         request_body = request_env[:body]
+        position = body_position(request_body)
         response = @app.call(retry_env(request_env, request_body, nil))
 
         return response unless request_option.max_retries.positive? && retryable?(response, request_body, 0, request_option)
 
-        retry_until_resolved(request_env, request_body, response, request_option)
+        retry_until_resolved(request_env, request_body, response, request_option, position)
       end
 
       private
@@ -49,23 +50,23 @@ module MicrosoftKiotaFaraday
 
       # Retries request_env until a non-retryable response is received, the configured
       # retries_time_limit would be exceeded, or the retry budget runs out.
-      def retry_until_resolved(request_env, request_body, response, request_option)
+      def retry_until_resolved(request_env, request_body, response, request_option, position)
         retries = 0
         cumulative_delay = 0
         responses = []
 
         loop do
+          if retries >= request_option.max_retries
+            responses << drain(response)
+            raise RetryExhaustedError, responses
+          end
           delay = retry_delay(response.headers[RETRY_AFTER_HEADER], retries, request_option)
 
           if request_option.retries_time_limit.positive?
             cumulative_delay += delay
             return response if cumulative_delay > request_option.retries_time_limit
           end
-          if retries >= request_option.max_retries
-            responses << drain(response)
-            raise RetryExhaustedError, responses
-          end
-          return response unless rewind_body(request_body)
+          return response unless restore_body(request_body, position)
 
           responses << drain(response)
 
@@ -87,7 +88,7 @@ module MicrosoftKiotaFaraday
       end
 
       def retryable?(response, request_body, retries, request_option)
-        (!request_body.respond_to?(:read) || request_body.respond_to?(:rewind)) &&
+        (!request_body.respond_to?(:read) || request_body.respond_to?(:seek)) &&
           request_option.should_retry.call(request_option.delay, retries, response)
       end
 
@@ -130,11 +131,22 @@ module MicrosoftKiotaFaraday
         response
       end
 
-      def rewind_body(body)
-        body.rewind if body.respond_to?(:rewind)
+      def body_position(body)
+        return unless body.respond_to?(:read) && body.respond_to?(:pos) && body.respond_to?(:seek)
+
+        body.pos
+      rescue IOError, SystemCallError
+        nil
+      end
+
+      def restore_body(body, position)
+        return true unless body.respond_to?(:read)
+        return false if position.nil?
+
+        body.seek(position)
         true
       rescue IOError, SystemCallError
-        # Pipes can expose rewind while still being non-seekable on MRI and JRuby.
+        # Pipes can expose seek while still being non-seekable on MRI and JRuby.
         false
       end
     end
