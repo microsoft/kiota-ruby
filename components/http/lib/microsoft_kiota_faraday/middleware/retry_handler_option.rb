@@ -23,7 +23,7 @@ module MicrosoftKiotaFaraday
       # @param retries_time_limit [Numeric] maximum cumulative delay in seconds to spend waiting
       #   across all retries, or 0 (the default) for no limit
       def initialize(max_retries: 3, delay: 3, should_retry: DEFAULT_SHOULD_RETRY, retries_time_limit: 0)
-        raise ArgumentError, "max_retries must be between 0 and #{MAX_RETRIES}" unless (0..MAX_RETRIES).cover?(max_retries)
+        raise ArgumentError, "max_retries must be between 0 and #{MAX_RETRIES}" unless max_retries.is_a?(Integer) && (0..MAX_RETRIES).cover?(max_retries)
         raise ArgumentError, "delay must be between 0 and #{MAX_DELAY}" unless (0..MAX_DELAY).cover?(delay)
         raise ArgumentError, 'retries_time_limit must be non-negative' if retries_time_limit.negative?
 

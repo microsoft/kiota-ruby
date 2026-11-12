@@ -11,7 +11,7 @@ module MicrosoftKiotaFaraday
       # @param responses [Array<Faraday::Response>] every retryable response received, in attempt order
       def initialize(responses)
         @responses = responses
-        super("Too many retries performed. More than #{responses.size - 1} retries encountered while sending the request.")
+        super("Too many retries performed. #{responses.size - 1} retries encountered while sending the request.")
       end
     end
   end

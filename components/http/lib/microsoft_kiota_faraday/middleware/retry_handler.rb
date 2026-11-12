@@ -29,9 +29,11 @@ module MicrosoftKiotaFaraday
       # @return [Faraday::Response] the eventual response, once a non-retryable response is received
       # @raise [RetryExhaustedError] if the retry budget is exhausted while responses remain retryable
       def call(request_env)
+        return @app.call(request_env) if request_env.is_a?(Faraday::Env) && (request_env.parallel? || request_env.request.on_data)
+
         request_option = option_for(request_env)
         request_body = request_env[:body]
-        response = @app.call(request_env)
+        response = @app.call(retry_env(request_env, request_body, nil))
 
         return response unless request_option.max_retries.positive? && retryable?(response, request_body, 0, request_option)
 
@@ -53,17 +55,21 @@ module MicrosoftKiotaFaraday
         responses = []
 
         loop do
-          responses << drain(response)
           delay = retry_delay(response.headers[RETRY_AFTER_HEADER], retries, request_option)
 
           if request_option.retries_time_limit.positive?
             cumulative_delay += delay
             return response if cumulative_delay > request_option.retries_time_limit
           end
-          raise RetryExhaustedError, responses if retries >= request_option.max_retries
+          if retries >= request_option.max_retries
+            responses << drain(response)
+            raise RetryExhaustedError, responses
+          end
+          return response unless rewind_body(request_body)
+
+          responses << drain(response)
 
           retries += 1
-          request_body.rewind if request_body.respond_to?(:rewind)
           sleep delay
           response = @app.call(retry_env(request_env, request_body, retries))
           return response unless retryable?(response, request_body, retries, request_option)
@@ -75,7 +81,7 @@ module MicrosoftKiotaFaraday
       def retry_env(request_env, request_body, retries)
         env = request_env.dup
         env[:request_headers] = (request_env[:request_headers] || {}).dup
-        env[:request_headers][RETRY_ATTEMPT_HEADER] = retries.to_s
+        env[:request_headers][RETRY_ATTEMPT_HEADER] = retries.to_s if retries
         env[:body] = request_body
         env
       end
@@ -102,16 +108,34 @@ module MicrosoftKiotaFaraday
           # instead of failing the request over a malformed header.
           return nil
         end
-        delay if delay.positive?
+        [delay, 0].max
       end
 
-      # Faraday adapters read the response body onto env.body before this middleware ever sees
-      # it, so there is no adapter-agnostic socket left to release here. Reading #body is the
-      # closest equivalent: it forces a lazily-streamed body to materialize so it's captured
-      # on RetryExhaustedError rather than left to the caller to fetch from a stale connection.
+      # Only release responses that will be discarded or attached to exhaustion errors.
+      # Preserve the bytes on the response so the retry history remains inspectable.
       def drain(response)
-        response.body
+        body = response.body
+        return response unless body.respond_to?(:read)
+
+        begin
+          content = body.read
+        ensure
+          body.close if body.respond_to?(:close)
+        end
+        if response.respond_to?(:env)
+          response.env.body = content
+        else
+          response.body = content
+        end
         response
+      end
+
+      def rewind_body(body)
+        body.rewind if body.respond_to?(:rewind)
+        true
+      rescue IOError, SystemCallError
+        # Pipes can expose rewind while still being non-seekable on MRI and JRuby.
+        false
       end
     end
   end

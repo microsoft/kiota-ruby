@@ -125,6 +125,25 @@ To auto-fix formatting issues:
 bundle exec rubocop -a
 ```
 
+## Retry middleware
+
+The default HTTP pipeline retries 429, 503 and 504 responses up to three times.
+It honors `Retry-After` delay-seconds and HTTP dates (including immediate retries
+for dates in the past), with exponential backoff otherwise and a 180-second delay cap.
+
+Configure individual requests with a `MicrosoftKiotaFaraday::Middleware::RetryHandlerOption`
+via `request_information.add_request_options(option)`. Options include `max_retries`
+(`0` disables retries), `delay`, `retries_time_limit` (cumulative planned delay in
+seconds; `0` means unlimited), and a `should_retry` callable receiving
+`(delay, retry_count, response)`. The same option can be supplied as a default
+middleware option when creating the HTTP client.
+
+Exhausting the retry count raises `MicrosoftKiotaFaraday::Middleware::RetryExhaustedError`,
+whose `responses` preserve the retry history. Exceeding the delay budget returns
+the last response. Responses discarded for retry are drained and closed when they
+contain readable streams. Requests with non-rewindable bodies, parallel requests,
+and requests using streaming callbacks are not replayed.
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
