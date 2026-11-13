@@ -16,6 +16,7 @@ module MicrosoftKiotaFaraday
       RETRY_ATTEMPT_HEADER = 'Retry-Attempt'
       RETRY_AFTER_HEADER = 'Retry-After'
       MAX_DELAY = RetryHandlerOption::MAX_DELAY
+      DRAIN_CHUNK_SIZE = 16 * 1024
 
       # @param app [#call] the next Faraday handler in the stack
       # @param default_option [RetryHandlerOption, nil] used for requests that don't carry their
@@ -117,7 +118,10 @@ module MicrosoftKiotaFaraday
         return response unless body.respond_to?(:read)
 
         begin
-          body.read
+          loop do
+            chunk = body.read(DRAIN_CHUNK_SIZE)
+            break if chunk.nil? || chunk.empty?
+          end
         ensure
           body.close if body.respond_to?(:close)
         end
