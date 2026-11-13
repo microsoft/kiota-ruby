@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0](https://github.com/microsoft/kiota-ruby/compare/v0.25.3...v0.26.0) (2026-11-13)
+
+
+### Features
+
+* **http:** add configurable retry middleware ([50de2c1](https://github.com/microsoft/kiota-ruby/commit/50de2c140f853d0b0325a3707dbf0d469a58eb32))
+* **http:** add per-request body inspection ([1313e78](https://github.com/microsoft/kiota-ruby/commit/1313e785b7d81cbd0b69e828ea435d850cc4b0cb))
+* **http:** add per-request body inspection ([b18b751](https://github.com/microsoft/kiota-ruby/commit/b18b751379eec376e2a8005e1088407c0f0a176f))
+* **http:** add per-request header inspection ([4f7c848](https://github.com/microsoft/kiota-ruby/commit/4f7c848b289e679a75bf146f57c2c0aebc6351c9))
+* **http:** add per-request header inspection ([54cf385](https://github.com/microsoft/kiota-ruby/commit/54cf3853f54a67fd3bc15b6c16dc41fd01c38bb3))
+* **http:** add redirect middleware ([fce2317](https://github.com/microsoft/kiota-ruby/commit/fce23178f6e75b1a54eaa55e0b36f7f41ff26e3f))
+* **http:** add redirect middleware ([b52ceaf](https://github.com/microsoft/kiota-ruby/commit/b52ceaf5a113a4c0fff726b845d4d5afc095150b))
+
+
+### Bug Fixes
+
+* **abstractions,text:** harden factory registries lifecycle, validator nil-safety, and text parsing ([24e5113](https://github.com/microsoft/kiota-ruby/commit/24e511358adc2b37c25a31ccbdb84fbe9d0e8e53))
+* **abstractions:** harden allowed hosts validation, registry error types, and spec isolation ([656bd80](https://github.com/microsoft/kiota-ruby/commit/656bd803c3f805bc810067712721d7674bc19e27))
+* **abstractions:** remove redundant require 'set' in spec to resolve rubocop lint offense ([aec82ea](https://github.com/microsoft/kiota-ruby/commit/aec82ea4bcc39cf820f413d54e0d9d8e66cfd16c))
+* address review feedback on retry middleware ([6543314](https://github.com/microsoft/kiota-ruby/commit/654331443148b2a33a9bc29f2b71082d80833f98))
+* align retry handler with kiota-dotnet semantics ([db83a08](https://github.com/microsoft/kiota-ruby/commit/db83a0825a5c52ac9351e99477b2a57e0cec77e6))
+* **http:** avoid retaining responses on retry exhaustion ([cc1a88f](https://github.com/microsoft/kiota-ruby/commit/cc1a88fb875bb038a41431bc35735caa7ec1992c))
+* **http:** complete retry stream handling and regression coverage ([310f900](https://github.com/microsoft/kiota-ruby/commit/310f900c46d6bdd3d32f7b8412de31f03ff2efa7))
+* **http:** drain retry response streams in bounded chunks ([15688e1](https://github.com/microsoft/kiota-ruby/commit/15688e18cf7023196ae7465c8446552e04ed6f08))
+* **http:** handle EPIPE when probing non-seekable bodies ([2284c19](https://github.com/microsoft/kiota-ruby/commit/2284c199e3203d453b6c25d301e44bb5d36074cf))
+* **http:** preserve body inspection across redirects ([cec15a2](https://github.com/microsoft/kiota-ruby/commit/cec15a28c74cc45421644cc0fc903931bfd66084))
+* **http:** preserve retry stream offsets and exhaustion precedence ([f49f51c](https://github.com/microsoft/kiota-ruby/commit/f49f51cfa92de9cb6ed96b9d073c5e3dcdaa66e5))
+* respect HTTP-date Retry-After values ([cda9796](https://github.com/microsoft/kiota-ruby/commit/cda97963e6b2365035f0f47b0604d329a41c3057))
+
 ## [0.25.3](https://github.com/microsoft/kiota-ruby/compare/v0.25.2...v0.25.3) (2026-11-09)
 
 
