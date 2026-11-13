@@ -53,12 +53,11 @@ module MicrosoftKiotaFaraday
       def retry_until_resolved(request_env, request_body, response, request_option, position)
         retries = 0
         cumulative_delay = 0
-        responses = []
 
         loop do
           if retries >= request_option.max_retries
-            responses << drain(response)
-            raise RetryExhaustedError, responses
+            drain(response)
+            raise RetryExhaustedError, retries
           end
           delay = retry_delay(response.headers[RETRY_AFTER_HEADER], retries, request_option)
 
@@ -68,7 +67,7 @@ module MicrosoftKiotaFaraday
           end
           return response unless restore_body(request_body, position)
 
-          responses << drain(response)
+          drain(response)
 
           retries += 1
           sleep delay
@@ -112,23 +111,16 @@ module MicrosoftKiotaFaraday
         [delay, 0].max
       end
 
-      # Only release responses that will be discarded or attached to exhaustion errors.
-      # Preserve the bytes on the response so the retry history remains inspectable.
+      # Drain and close discarded response streams without retaining their contents.
       def drain(response)
         body = response.body
         return response unless body.respond_to?(:read)
 
         begin
-          content = body.read
+          body.read
         ensure
           body.close if body.respond_to?(:close)
         end
-        if response.respond_to?(:env)
-          response.env.body = content
-        else
-          response.body = content
-        end
-        response
       end
 
       def body_position(body)

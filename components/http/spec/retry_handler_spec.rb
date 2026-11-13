@@ -90,7 +90,7 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
     expect(sleeps).to eq([2, 4, 8])
   end
 
-  it 'raises RetryExhaustedError with the collected responses once max_retries is exhausted' do
+  it 'raises RetryExhaustedError without retaining responses once max_retries is exhausted' do
     app = double
     unavailable = Struct.new(:status, :headers, :body).new(503, {}, nil)
     allow(app).to receive(:call).and_return(unavailable, unavailable)
@@ -100,7 +100,9 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
     request = { body: nil, request_headers: {}, request: { context: { option.get_key => option } } }
 
     expect { handler.call(request) }.to raise_error(MicrosoftKiotaFaraday::Middleware::RetryExhaustedError) do |error|
-      expect(error.responses).to eq([unavailable, unavailable])
+      expect(error.message).to include('1 retries encountered')
+      expect(error).not_to respond_to(:responses)
+      expect(error.instance_variables).not_to include(:@responses)
     end
     expect(app).to have_received(:call).twice
   end

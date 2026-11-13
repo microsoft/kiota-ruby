@@ -139,7 +139,7 @@ seconds; `0` means unlimited), and a `should_retry` callable receiving
 middleware option when creating the HTTP client.
 
 Exhausting the retry count raises `MicrosoftKiotaFaraday::Middleware::RetryExhaustedError`,
-whose `responses` preserve the retry history. Exceeding the delay budget returns
+without retaining response history. Exceeding the delay budget returns
 the last response. Responses discarded for retry are drained and closed when they
 contain readable streams. Requests with non-rewindable bodies, parallel requests,
 and requests using streaming callbacks are not replayed.

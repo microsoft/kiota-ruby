@@ -26,7 +26,7 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
 
     expect(handler.call(body: nil, request_headers: {})).to eq(success)
     expect(stream).to be_closed
-    expect(failed.body).to eq('unavailable')
+    expect(failed.body).to equal(stream)
   end
 
   it 'closes a failed response stream even when reading it raises' do
@@ -110,7 +110,7 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
     end
   end
 
-  it 'keeps streamed response details on retry exhaustion' do
+  it 'closes streamed responses without retaining their details on retry exhaustion' do
     streams = [StringIO.new('first'), StringIO.new('last')]
     failures = streams.map { |stream| Faraday::Response.new(status: 503, response_headers: {}, body: stream) }
     allow(app).to receive(:call).and_return(*failures)
@@ -120,7 +120,9 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
     expect { limited.call(body: nil, request_headers: {}) }.to raise_error(
       MicrosoftKiotaFaraday::Middleware::RetryExhaustedError
     ) do |error|
-      expect(error.responses.map(&:body)).to eq(%w[first last])
+      expect(error).not_to respond_to(:responses)
+      expect(error.instance_variables).to be_empty
+      expect(failures.map(&:body)).to eq(streams)
       expect(streams).to all(be_closed)
     end
   end
@@ -156,7 +158,7 @@ RSpec.describe MicrosoftKiotaFaraday::Middleware::RetryHandler do
     expect { limited.call(body: nil, request_headers: {}) }.to raise_error(
       MicrosoftKiotaFaraday::Middleware::RetryExhaustedError
     ) do |error|
-      expect(error.responses).to eq(responses)
+      expect(error.message).to include('1 retries encountered')
     end
     expect(app).to have_received(:call).twice
     expect(limited).to have_received(:sleep).once.with(3)
