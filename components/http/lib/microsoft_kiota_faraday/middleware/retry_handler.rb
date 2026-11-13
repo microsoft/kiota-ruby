@@ -17,6 +17,10 @@ module MicrosoftKiotaFaraday
       RETRY_AFTER_HEADER = 'Retry-After'
       MAX_DELAY = RetryHandlerOption::MAX_DELAY
       DRAIN_CHUNK_SIZE = 16 * 1024
+      NON_IDEMPOTENT_METHODS = %w[POST PATCH].freeze
+      # By common service convention, these status codes mean the server didn't process the
+      # request, so resending it is treated as safe for any method.
+      UNPROCESSED_STATUS_CODES = [429, 503].freeze
 
       # @param app [#call] the next Faraday handler in the stack
       # @param default_option [RetryHandlerOption, nil] used for requests that don't carry their
@@ -37,7 +41,7 @@ module MicrosoftKiotaFaraday
         position = body_position(request_body)
         response = @app.call(retry_env(request_env, request_body, nil))
 
-        return response unless request_option.max_retries.positive? && retryable?(response, request_body, 0, request_option)
+        return response unless request_option.max_retries.positive? && retryable?(request_env, response, 0, request_option)
 
         retry_until_resolved(request_env, request_body, response, request_option, position)
       end
@@ -73,7 +77,7 @@ module MicrosoftKiotaFaraday
           retries += 1
           sleep delay
           response = @app.call(retry_env(request_env, request_body, retries))
-          return response unless retryable?(response, request_body, retries, request_option)
+          return response unless retryable?(request_env, response, retries, request_option)
         end
       end
 
@@ -87,9 +91,21 @@ module MicrosoftKiotaFaraday
         env
       end
 
-      def retryable?(response, request_body, retries, request_option)
+      def retryable?(request_env, response, retries, request_option)
+        request_body = request_env[:body]
         (!request_body.respond_to?(:read) || request_body.respond_to?(:seek)) &&
-          request_option.should_retry.call(request_option.delay, retries, response)
+          request_option.should_retry.call(request_option.delay, retries, response) &&
+          retryable_for_method?(request_env[:method], response, request_option)
+      end
+
+      # With retry_unprocessed_mutations_only set, POST and PATCH requests are retried only after a
+      # response showing the server didn't process them, because a 504 may arrive after the server
+      # already acted on the request. Each retry resends request_env, so its method is the one to check.
+      def retryable_for_method?(method, response, request_option)
+        return true unless request_option.retry_unprocessed_mutations_only
+        return true unless NON_IDEMPOTENT_METHODS.include?(method.to_s.upcase)
+
+        UNPROCESSED_STATUS_CODES.include?(response.status)
       end
 
       def retry_delay(value, retries, request_option)
