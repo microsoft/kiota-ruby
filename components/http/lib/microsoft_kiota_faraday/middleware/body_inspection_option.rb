@@ -5,7 +5,8 @@ require 'microsoft_kiota_abstractions'
 
 module MicrosoftKiotaFaraday
   module Middleware
-    # Opt in per request. The caller owns and should close each in-memory copy.
+    # Opt in per request. Each capture replaces the previous snapshot, and the caller
+    # owns and should close any in-memory copy it keeps.
     # Capturing large payloads increases memory use; non-seekable streams are skipped.
     class BodyInspectionOption
       include MicrosoftKiotaAbstractions::RequestOption
