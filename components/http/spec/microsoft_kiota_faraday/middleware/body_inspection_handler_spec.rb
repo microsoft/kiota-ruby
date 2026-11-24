@@ -54,19 +54,31 @@ RSpec.describe 'Body inspection' do
     expect(response.body).to eq('error details')
   end
 
-  it 'copies the original request and the final response across a redirect' do
+  it 'captures the body sent on each attempt, including a redirect that drops the body' do
     option = MicrosoftKiotaFaraday::Middleware::BodyInspectionOption.new(
       inspect_request_body: true, inspect_response_body: true
     )
-    stubs.post('/items') { [303, { 'Location' => '/result' }, 'intermediate'] }
+    stubs.post('/items') do
+      expect(option.request_body.read).to eq('payload')
+      [303, { 'Location' => '/result' }, 'redirect']
+    end
     stubs.get('/result') do |env|
       expect(env.body).to be_nil
+      expect(option.request_body).to be_nil
+      expect(option.response_body.read).to eq('redirect')
+      [503, { 'Retry-After' => '0' }, 'retry']
+    end
+    stubs.get('/result', { 'Retry-Attempt' => '1' }) do |env|
+      expect(env.body).to be_nil
+      expect(option.request_body).to be_nil
+      expect(option.response_body.read).to eq('retry')
       [200, {}, 'final']
     end
 
     expect(post_body('payload', option).body).to eq('final')
-    expect(option.request_body.read).to eq('payload')
+    expect(option.request_body).to be_nil
     expect(option.response_body.read).to eq('final')
+    stubs.verify_stubbed_calls
   end
 
   it 'leaves a non-seekable request stream for the transport to consume' do

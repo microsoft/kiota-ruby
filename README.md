@@ -55,8 +55,8 @@ custom Faraday middleware stack, include
 
 ## Inspect request or response bodies
 
-The default middleware can copy the body for a single request. To inspect the
-response body while still letting Kiota deserialize it, add a
+The default middleware can copy the bodies sent and received for a request.
+To inspect the response body while still letting Kiota deserialize it, add a
 `BodyInspectionOption` to the request configuration:
 
 ```ruby
@@ -74,9 +74,14 @@ end
 Set `inspect_request_body: true` to inspect the outgoing body instead or as well.
 Use a new option for each request and close each copy when finished. Copies
 are held in memory, so avoid inspecting large payloads. Body inspection skips
-non-seekable streams. With the default middleware stack, it inspects the
-original request and the final response after redirects. For a custom Faraday
-middleware stack, include `MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler`.
+non-seekable streams unless an earlier handler has buffered them. The default
+middleware inspects each transport attempt, including redirects and retries.
+Each capture replaces the preceding snapshot, so after completion the option
+holds the last request and response bodies, not a history. A redirect that
+rewrites a POST to a bodyless GET leaves `request_body` as `nil`. In a custom
+Faraday middleware stack, place
+`MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler` after any handlers
+that modify or resend the request.
 
 ## Follow redirects
 

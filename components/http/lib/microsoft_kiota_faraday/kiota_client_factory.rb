@@ -12,13 +12,12 @@ module MicrosoftKiotaFaraday
   class KiotaClientFactory
     def self.get_default_middleware
       [
-        # Inspect the original request before redirects buffer or rewrite it.
-        MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler,
-        MicrosoftKiotaFaraday::Middleware::RedirectHandler,
-        MicrosoftKiotaFaraday::Middleware::RetryHandler,
         MicrosoftKiotaFaraday::Middleware::ParametersNameDecodingHandler,
         MicrosoftKiotaFaraday::Middleware::UserAgentHandler,
-        MicrosoftKiotaFaraday::Middleware::HeadersInspectionHandler
+        MicrosoftKiotaFaraday::Middleware::RedirectHandler,
+        MicrosoftKiotaFaraday::Middleware::RetryHandler,
+        MicrosoftKiotaFaraday::Middleware::HeadersInspectionHandler,
+        MicrosoftKiotaFaraday::Middleware::BodyInspectionHandler
       ]
     end
 
