@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0](https://github.com/microsoft/kiota-ruby/compare/v0.26.0...v0.27.0) (2026-11-26)
+
+
+### Features
+
+* **http:** add option to retry only unprocessed mutations ([d50eafd](https://github.com/microsoft/kiota-ruby/commit/d50eafd523441b50e318bd0cd6959bee07600280))
+* **http:** add option to retry only unprocessed mutations ([11925e5](https://github.com/microsoft/kiota-ruby/commit/11925e56b32814f6e0360c09ccdac664543b24bb))
+
+
+### Bug Fixes
+
+* **http:** align default middleware order ([9b8eb20](https://github.com/microsoft/kiota-ruby/commit/9b8eb20fdc6c1108fb0c3c1e51c08526bf089ca1))
+* **http:** align default middleware order ([655913c](https://github.com/microsoft/kiota-ruby/commit/655913c8d2b4494d5e36c544a1ba5a13e5034554))
+
 ## [0.26.0](https://github.com/microsoft/kiota-ruby/compare/v0.25.3...v0.26.0) (2026-11-13)
 
 
